@@ -1,0 +1,1093 @@
+\documentclass{article}
+
+% Language setting
+% Replace `English' with e.g. `Spanish' to change the document language
+\usepackage[english]{babel}
+\usepackage[fontset=ubuntu]{ctex}
+
+% Set page size and margins
+% Replace `letter paper' with`a4paper' for UK/EU standard size
+\usepackage[a4paper,top=1.5cm,bottom=1.5cm,left=2cm,right=2cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage[ruled]{algorithm2e}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\SetKwProg{Function}{function}{:}{end}
+
+\title{\heiti 计算机学院《算法设计与分析》第二次作业}
+\author{114514 李田所}
+
+\begin{document}
+\maketitle
+
+\section{数组填充问题}
+
+李华有一个长度为$n$的整数数组$a$，这个数组有以下性质：
+
+\begin{enumerate}[itemindent=3em]
+    \item 这个数组的所有元素之和为$3$的倍数
+    \item 这个数组的每个元素$a_i$都满足$a_i\in[l,r]$
+\end{enumerate}
+
+李华忘记了这个数组的元素，请你设计一个高效的算法，帮助他找出有多少个满足条件的数组，并分析该算法的时间复杂度。
+
+例如，长度为$n=2$，满足区间$l=1,r=3$的数组，包括$[1,2],[2,1],[3,3]$，则答案为$3$。
+
+\subsection{算法思想}
+
+一个暴力的做法搜索全部可能的数组并逐个验证，有指数时间复杂度。
+
+一个常规的做法是通过递推计算，记$dp[i][j]$为长度为$i$且总和模$3$余$j$的数组的个数，$count[i]$为区间$[l,r]$中和模$3$余$j$的数的个数，则有递推方程：
+
+$$
+dp[i][j]=\sum_{k=0}^2dp[i-1][k]\times{count}[(j-k+3)\%3];
+$$
+
+显然上述做法有线性时间复杂度。
+
+一个更好的做法是使用矩阵快速幂加速上述递推，记$(a_i,b_i,c_i)$为长度为$i$且总和模$3$分别余$0,1,2$的数组的个数，则有状态转移矩阵：
+
+$$
+\begin{pmatrix}
+    count[0]&count[1]&count[2]\\
+    count[2]&count[0]&count[1]\\
+    count[1]&count[2]&count[0]
+\end{pmatrix}
+$$
+
+使下式成立：
+
+$$
+\begin{pmatrix}
+    a_i&b_i&c_i
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    count[0]&count[1]&count[2]\\
+    count[2]&count[0]&count[1]\\
+    count[1]&count[2]&count[0]
+\end{pmatrix}
+=
+\begin{pmatrix}
+    a_{i+1}&b_{i+1}&c_{i+1}
+\end{pmatrix}
+$$
+
+由此可得：
+
+$$
+\begin{pmatrix}
+    a_1&b_1&c_1
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    count[0]&count[1]&count[2]\\
+    count[2]&count[0]&count[1]\\
+    count[1]&count[2]&count[0]
+\end{pmatrix}
+^{n-1}
+=
+\begin{pmatrix}
+    a_n&b_n&c_n
+\end{pmatrix}
+$$
+
+通过矩阵快速幂，可以在对数时间复杂度完成矩阵幂运算，且矩阵确定为三阶，其余部分均可以在$O(1)$时间内完成计算，故上述做法有对数时间复杂度。
+
+上述主要做法均使用$C++$进行了实现并进行了测试，为使格式美观相关代码见文末附录。
+
+\subsection{普通递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{数组填充问题普通递推做法}
+\LinesNumbered
+\KwIn{整数$n,\ l,\ r$，为数组长度及左右端点}
+\KwOut{整数$ans$，符合条件的数组个数}
+
+\Function{$count\_from\_one(mod,num)$}{
+    $ans\leftarrow{num}/3$\;
+    \If{$num\%3=1\ and\ mod=1$}{
+        $ans\leftarrow{ans}+1$\;
+    }
+    \If{$num\%3=2\ and\ mod\ge1$}{
+        $ans\leftarrow{ans}+1$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\Function{$count\_between(mod,l,r)$}{
+    $gap\leftarrow{max}(l,r,-l,-r)/3\cdot3+3$\;
+    \textbf{$return\ count\_from\_one(mod,r+gap)-count\_from\_one(mod,l-1+gap)$}\;
+}
+
+\Function{$main(n,l,r)$}{
+    \If{$l>r$}{
+        \textbf{$return\ 0$}\;
+    }
+    \For{$i\leftarrow0\ to\ 2$}{
+        $dp[0][i]\leftarrow{count\_between}(i,l,r)$\;
+    }
+    \For{$i\leftarrow1\ to\ n-1$}{
+        \For{$j\leftarrow0\ to\ 2$}{
+            \For{$k\leftarrow0\ to\ 2$}{
+                $dp[i][j]\leftarrow{dp}[i][j]+dp[i-1][k]\cdot{dp}[0][(j-k+3)\%3]$\;
+            }
+        }
+    }
+    \textbf{$return\ dp[n-1][0]$}\;
+}
+
+\end{algorithm}
+
+显然函数$count\_from\_one(mod,num)$和$count\_between(mod,l,r)$都是$O(1)$复杂度的，而主函数中，$19-21$行的循环只执行常数次，因此是$O(1)$复杂度的，$22-28$行的循环中只有最外层循环执行$n-1$次，其余均只执行常数次，因此是$O(n)$复杂度的，从而普通递推做法的总时间复杂度为$O(n)$。
+
+\subsection{矩阵快速幂做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{数组填充问题矩阵快速幂做法}
+\LinesNumbered
+\KwIn{整数$n,\ l,\ r$，为数组长度及左右端点}
+\KwOut{整数$ans$，符合条件的数组个数}
+
+\Function{$count\_from\_one(mod,num)$}{
+    $ans\leftarrow{num}/3$\;
+    \If{$num\%3=1\ and\ mod=1$}{
+        $ans\leftarrow{ans}+1$\;
+    }
+    \If{$num\%3=2\ and\ mod\ge1$}{
+        $ans\leftarrow{ans}+1$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\Function{$count\_between(mod,l,r)$}{
+    $gap\leftarrow{max}(l,r,-l,-r)/3\cdot3+3$\;
+    \textbf{$return\ count\_from\_one(mod,r+gap)-count\_from\_one(mod,l-1+gap)$}\;
+}
+
+\Function{$mult\_count(count,matrix)$}{
+    \For{$i\leftarrow0\ to\ 2$}{
+        $temp[i]\leftarrow{count}[i]$\;
+        $count[i]\leftarrow0$\;
+    }
+    \For{$i\leftarrow0\ to\ 2$}{
+        \For{$j\leftarrow0\ to\ 2$}{
+            $count[j]\leftarrow{count}[j]+matrix[i][j]\cdot{temp}[i]$\;
+        }
+    }
+}
+
+\Function{$mult\_matrix(matrix)$}{
+    \For{$i\leftarrow0\ to\ 2$}{
+        \For{$j\leftarrow0\ to\ 2$}{
+            $temp[i][j]\leftarrow{matrix}[i][j]$\;
+            $matrix[i][j]\leftarrow0$\;
+        }
+    }
+    \For{$i\leftarrow0\ to\ 2$}{
+        \For{$j\leftarrow0\ to\ 2$}{
+            \For{$k\leftarrow0\ to\ 2$}{
+                $matrix[i][j]\leftarrow{matrix}[i][j]+temp[i][k]\cdot{temp}[k][j]$\;
+            }
+        }
+    }
+}
+
+\end{algorithm}
+
+\begin{algorithm}[H]
+
+\caption{数组填充问题矩阵快速幂做法}
+\LinesNumbered
+\KwIn{整数$n,\ l,\ r$，为数组长度及左右端点}
+\KwOut{整数$ans$，符合条件的数组个数}
+
+\Function{$main(n,l,r)$}{
+    \If{$l>r$}{
+        \textbf{$return\ 0$}\;
+    }
+    \For{$i\leftarrow0\ to\ 2$}{
+        $count[i]\leftarrow{count\_between}(i,l,r)$\;
+    }
+    $matrix[0][0]\leftarrow{count}[0],matrix[0][1]\leftarrow{count}[1],matrix[0][2]\leftarrow{count}[2]$\;
+    $matrix[1][0]\leftarrow{count}[2],matrix[1][1]\leftarrow{count}[0],matrix[1][2]\leftarrow{count}[1]$\;
+    $matrix[2][0]\leftarrow{count}[1],matrix[2][1]\leftarrow{count}[2],matrix[2][2]\leftarrow{count}[0]$\;
+    $t\leftarrow{n}-1$\;
+    \While{t>0}{
+        \If{$t\%2=1$}{
+            $mult\_count(count,matrix)$\;
+        }
+        $mult\_matrix(matrix)$\;
+        $t=t/2$\;
+    }
+    \textbf{$return\ count[0]$}\;
+}
+
+\end{algorithm}
+
+显然函数$count\_from\_one(mod,num)$、$count\_between(mod,l,r)$、$mult\_count(count,matrix)$和$mult\_matrix(matrix)$都是$O(1)$复杂度的，而主函数中，$5-7$行的循环只执行常数次，因此是$O(1)$复杂度的，$12-18$行的循环执行次数为$log_2(n-1)$，因此是$O(log n)$复杂度的，从而矩阵快速幂做法的总时间复杂度为$O(log n)$。
+
+\section{最长递增子序列问题}
+
+递增子序列是指：从原序列中按顺序挑选出某些元素组成一个新序列，并且该新序列中的任意一个元素均大于该元素之前的所有元素。例如，对于序列$<5,24,8,17,12,45>$，该序列的两个递增子序列为$<5,8,12,45>$和$<5,8,17,45>$，并且可以验证它们也是原序列最长的递增子序列。请设计算法来求出一个包含$n$个元素的序列$A=<a_1,a_2,···,a_n>$中的最长递增子序列，并分析该算法的时间复杂度。
+
+\subsection{算法思想}
+
+一个常规的做法是通过递推计算，一种递推的方式为记$dp[i]$为前$i$个数中以$a[i]$结尾的最长递增子序列长度，则有递推方程：
+
+$$
+dp[i]=max(dp[j])+1
+$$
+
+其中$j$需要满足：
+
+$$
+a[i]>a[j]
+$$
+
+则最终结果为：
+
+$$
+max(dp[1],dp[1],...dp[n])
+$$
+
+而在$dp[i]=max(dp[j])+1$成立时同时进行以下记录：
+
+$$
+last[i]=j
+$$
+
+则可从最终结果的下标开始向前寻找，最终得到一个最长递增子序列。
+
+注意到枚举和下标$i$，对每个$i$寻找最大值和利用$last$寻找最长递增子序列都是线性时间复杂度的操作，上述做法有平方时间复杂度。
+
+一个更好的做法是采用另一种递推的方式，记$dp[i]$为长度为$i$的递增子序列中最小的末尾元素的下标，此时可得递推方程：
+
+$$
+dp[pos]=i
+$$
+
+其中$pos$需要满足：
+
+$$
+a[dp[1]],a[dp[2]],...,a[dp[pos-1]]<a[i]
+$$
+$$
+a[dp[pos]],a[dp[pos+1]],...,a[dp[n]]\ge{a}[i]
+$$
+
+则最终结果为：
+
+$$
+max(i)\ s.t.\ dp[i]\ne{null}
+$$
+
+而在$dp[pos]=i$成立时同时进行以下记录：
+
+$$
+last[i]=dp[pos-1]
+$$
+
+则可从最终结果的下标开始向前寻找，最终得到一个最长递增子序列。
+
+注意到$dp$是单调不减的，可以使用二分查找获得$pos$，而对$i$的枚举和利用$last$寻找最长递增子序列都是线性时间复杂度的操作，故上述做法有线性乘对数的时间复杂度。
+
+上述主要做法均使用$C++$进行了实现并进行了测试，为使格式美观相关代码见文末附录。
+
+\subsection{普通递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{最长递增子序列问题普通递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，长度为$n$的整数数组$a$}
+\KwOut{整数$ans$，为最长递增子序列长度，长度为$ans$的整数数组$arr$，为最长递增子序列}
+
+\Function{$main(n,m,a[])$}{
+    \For{$i\leftarrow1\ to\ n$}{
+        $dp[i]\leftarrow1$\;
+    }
+    \For{$i\leftarrow1\ to\ n$}{
+        \For{$j\leftarrow1\ to\ i-1$}{
+            \If{$a[i]>a[j]\ and\ dp[j]+1\ge{dp}[i]$}{
+                $dp[i]\leftarrow{dp}[j]+1$\;
+                $last[i]\leftarrow{j}$\;
+            }
+        }
+    }
+    $ans\leftarrow-1$\;
+    $index\leftarrow-1$\;
+    \For{$i\leftarrow1\ to\ n$}{
+        \If{$dp[i]>ans$}{
+            $ans\leftarrow{dp}[i]$\;
+            $index\leftarrow{i}$\;
+        }
+    }
+    \For{$i\leftarrow0\ to\ ans-1$}{
+        $arr[ans-1-i]\leftarrow{a}[index]$\;
+        $index\leftarrow{last}[index]$\;
+    }
+    \textbf{$return\ ans,arr$}\;
+}
+
+\end{algorithm}
+
+主函数中，$2-4$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$5-12$行的循环的执行次数为$\sum_{i=1}^n(i-1)$，因此是$O(n^2)$复杂度的，$15-20$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$21-24$行的循环本质是在求一个最长递增子序列，最坏情况下会循环$n$次(输入序列单调递增时)，因此是$O(n)$复杂度的，从而普通递推做法的总时间复杂度为$O(n^2)$。
+
+\subsection{二分优化递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{最长递增子序列问题二分优化递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，长度为$n$的整数数组$a$}
+\KwOut{整数$ans$，为最长递增子序列长度，长度为$ans$的整数数组$arr$，为最长递增子序列}
+
+\Function{$main(n,m,a[])$}{
+    $ans\leftarrow-1$\;
+    $index\leftarrow-1$\;
+    $a[0]\leftarrow0x7fff\_ffff$\;
+    \For{$i\leftarrow1\ to\ n$}{
+        $l\leftarrow0$\;
+        $r\leftarrow{n}+1$\;
+        \While{$r-l>1$}{
+            $mid\leftarrow(l+r)/2$\;
+            \eIf{$a[dp[mid]]\ge{a}[i]$}{
+                $r\leftarrow{mid}$\;
+            } {
+                $l\leftarrow{mid}$\;
+            }
+        }
+        $dp[r]\leftarrow{i}$\;
+        $last[i]\leftarrow{dp}[r-1]$\;
+        \If{$r>ans$}{
+            $ans\leftarrow{r}$\;
+            $index\leftarrow{i}$\;
+        }
+    }
+    \For{$i\leftarrow0\ to\ ans-1$}{
+        $arr[ans-1-i]\leftarrow{a}[index]$\;
+        $index\leftarrow{last}[index]$\;
+    }
+    \textbf{$return\ ans,arr$}\;
+}
+
+\end{algorithm}
+
+主函数中，$5-22$行的循环的执行次数为$n$，而每次循环中，需要进行$8-15$行的二分查找，由于二分查找是$O(log n)$复杂度的，$6-21$行的循环是$O(n log n)$复杂度的，$23-26$行的循环本质是在求一个最长递增子序列，最坏情况下会循环$n$次(输入序列单调递增时)，因此是$O(n)$复杂度的，从而二分优化递推做法的总时间复杂度为$O(n log n)$。
+
+\section{硬币问题}
+
+给定$n$枚硬币($n$为奇数)，编号为$1,2,···,n$。投掷第$i$枚硬币时有$p_i$的概率正面朝上，有$1−p_i$的概率反面朝上。
+
+设计算法求解投掷这$n$枚硬币，其中正面朝上的硬币数量多于反面朝上的硬币数量的概率，并分析该算法的时间复杂度。
+
+例如给定$n=3$枚硬币，其正面朝上的概率分别为$p_1=0.3,p_2=0.6,p_3=0.8$。有下述四种情况正面朝上的硬币数量多于反面朝上：
+
+\begin{enumerate}[itemindent=3em]
+    \item 三枚硬币同时朝上，概率为$0.3\times0.6\times0.8=0.144$。
+    \item 第一枚硬币朝下，第二枚硬币朝上，第三枚硬币朝上，概率为$0.7\times0.6\times0.8=0.336$。
+    \item 第一枚硬币朝上，第二枚硬币朝下，第三枚硬币朝上，概率为$0.3\times0.4\times0.8=0.096$。
+    \item 第一枚硬币朝上，第二枚硬币朝上，第三枚硬币朝下，概率为$0.3\times0.6\times0.2=0.036$。
+\end{enumerate}
+
+故总概率为$0.144+0.336+0.096+0.036=0.612$。
+
+\subsection{算法思想}
+
+一个暴力的想法是按照题目要求枚举$n$个硬币共计$2^n$种可能的朝向及对应的概率，并累加符合条件的结果，有指数时间复杂度。
+
+一个常规的做法是通过递推计算，记$dp[i][j]$为前$i$个硬币中有$j$个朝上的概率，则有递推方程：
+
+$$
+dp[i][j]=dp[i-1][j-1]\times{p}[i]+dp[i-1][j]\times(1-p[i])
+$$
+
+上述做法会填满一个$n$行$n$列的表格，且每个单元格可以在$O(1)$时间内计算出结果，故上述做法有平方时间复杂度。
+
+一个更好的做法是利用$\prod(p_ix+1-p_i)$使用分治$FFT$进行求解，可以达到$O(n\cdot{log}n\cdot{log}n)$的时间复杂度，考虑到上述做法过程较为繁琐，在此不做展开(逃)。
+
+上述主要做法均使用$C++$进行了实现并进行了测试，为使格式美观相关代码见文末附录。
+
+\subsection{递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{硬币问题递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，长度为$n$的浮点数数组$a$，为每个硬币正面朝上的概率}
+\KwOut{浮点数$ans$，为正面朝上的硬币数量多于反面朝上的硬币数量的概率}
+
+\Function{$main(n,a[])$}{
+    $dp[0][0] \leftarrow 1$\;
+    \For{$i\leftarrow1\ to\ n$}{
+        $dp[i][0]\leftarrow{dp}[i-1][0]\cdot(1-a[i])$\;
+    }
+    \For{$i\leftarrow1\ to\ n$}{
+        \For{$j\leftarrow1\ to\ n$}{
+            $dp[i][j]\leftarrow{dp}[i-1][j-1]\cdot{a}[i]+dp[i-1][j]\cdot(1-a[i])$\;
+        }
+    }
+    $ans\leftarrow0$\;
+    \For{$i\leftarrow{n/2+1}\ to\ n$}{
+        $ans\leftarrow{ans}+dp[n][i]$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\end{algorithm}
+
+主函数中，$3-5$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$6-10$行的循环的执行次数为$n^2$，因此是$O(n^2)$复杂度的，$12-14$行的循环执行次数为$n/2-1$，因此是$O(n)$复杂度的，从而递推做法的总时间复杂度为$O(n^2)$。
+
+\section{鲜花组合问题}
+
+花店共有$n$种不同颜色的花，其中第$i$种库存有$a_i$枝，现要从中选出$m$枝花组成一束鲜花。请设计算法计算有多少种组合一束花的方案，并分析该算法时间复杂度。(每种花数量均相同的
+方案算一种方案)
+
+\subsection{算法思想}
+
+一个暴力的想法是按照多重集组合数计算公式求解$2^n$个组合数得到结果，有指数时间复杂度。
+
+一个常规的做法是通过递推计算，记$dp[i][j]$为从前$i$种花中选择$j$个的方案数，则有递推方程：
+
+$$
+dp[i][j]=\sum_{k=0}^{min(j,a[i])}dp[i-1][j-k];
+$$
+
+上述做法会填满一个$n$行$n$列的表格，且每个单元格可以在线性时间内计算出结果，故上述做法有三次方时间复杂度。
+
+注意到上述做法中$\sum_{k=0}^{min(j,a[i])}dp[i-1][j-k]$的计算存在重复，即有如下两式：
+
+$$
+dp[i][j]=\sum_{k=0}^{min(j,a[i])}dp[i-1][j-k];
+$$
+$$
+dp[i][j-1]=\sum_{k=0}^{min(j-1,a[i])}dp[i-1][j-k-1];
+$$
+
+考虑上面两式的关系，可以分为分下面三种情况：
+
+$$
+a[i]\ge{j}+1,\ dp[i][j]=dp[i][j-1]+dp[i-1][j]
+$$
+$$
+a[i]=j,\ dp[i][j]=dp[i][j-1]+dp[i-1][j]
+$$
+$$
+a[i]\le{j}-1,\ dp[i][j]=dp[i][j-1]+dp[i-1][j]-dp[i-1][j-1-a[i]]
+$$
+
+合并相同的情况，可以得到新的递推方程：
+
+$$
+a[i]\ge{j},\ dp[i][j]=dp[i][j-1]+dp[i-1][j]
+$$
+$$
+a[i]<j,\ dp[i][j]=dp[i][j-1]+dp[i-1][j]-dp[i-1][j-1-a[i]]
+$$
+
+上述做法会填满一个$n$行$n$列的表格，且每个单元格可以在$O(1)$时间内计算出结果，故上述做法有平方时间复杂度。
+
+一个更好的做法是利用生成函数使用分治$FFT$进行求解，可以达到$O(n\cdot{log}n\cdot{log}m)$的复杂度，考虑到上述做法过程较为繁琐，在此不做展开(逃)。
+
+上述主要做法均使用$C++$进行了实现并进行了测试，为使格式美观相关代码见文末附录。
+
+\subsection{普通递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{鲜花组合问题普通递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为花的种数，整数$m$，为选出个数，长度为$n$的整数数组$a$，为每种花的个数}
+\KwOut{整数$ans$，为总方案数}
+
+\Function{$main(n,m,a[])$}{
+    \For{$i\leftarrow0\ to\ n$}{
+        $dp[i][0]\leftarrow1$\;
+    }
+    \For{$i\leftarrow1\ to\ n$}{
+        \For{$j\leftarrow1\ to\ m$}{
+            \For{$k\leftarrow0\ to\ min(j,a[i])$}{
+                $dp[i][j]\leftarrow{dp}[i][j]+dp[i-1][j-k]$\;
+            }
+        }
+    }
+    \textbf{$return\ dp[n][m]$}\;
+}
+
+\end{algorithm}
+
+主函数中，$2-4$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$5-11$行的循环中，最外层和中间层执行次数分别是$n,m$，最内层的执行次数为$min(j,a_i)\le{min}(m,max(a_1,a_2,...,a_n)$，因此$5-11$行的循环是$O(n\cdot{m}\cdot{min(m,max(a_1,a_2,...,a_n)})$复杂度的，从而普通递推做法的总时间复杂度为$O(n\cdot{m}\cdot{min(m,max(a_1,a_2,...,a_n)})$。
+
+\subsection{优化递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{鲜花组合问题优化递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为花的种数，整数$m$，为选出个数，长度为$n$的整数数组$a$，为每种花的个数}
+\KwOut{整数$ans$，为总方案数}
+
+\Function{$main(n,m,a[])$}{
+    \For{$i\leftarrow0\ to\ n$}{
+        $dp[i][0]\leftarrow1$\;
+    }
+    \For{$i\leftarrow1\ to\ n$}{
+        \For{$j\leftarrow1\ to\ m$}{
+            \eIf{$a[i]\ge{j}$}{
+                $dp[i][j]\leftarrow{dp}[i][j-1]+dp[i-1][j]$\;
+            } {
+                $dp[i][j]\leftarrow{dp}[i][j-1]+dp[i-1][j]-dp[i-1][j-1-a[i]]$\;
+            }
+        }
+    }
+    \textbf{$return\ dp[n][m]$}\;
+}
+
+\end{algorithm}
+
+主函数中，$2-4$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$5-13$行的循环中，外层和内层执行次数分别是$n,m$，每次循环可以在$O(1)$复杂度内完成计算，因此$5-13$行的循环是$O(n m)$复杂度的，从而优化递推做法的总时间复杂度为$O(n m)$。
+
+\section{最大分值问题}
+
+给定一个包含$n$个整数的序列$a_1,a_2,...,a_n$，对其中任意一段连续区间$a_i...a_j$，其分值为
+
+$$
+(\sum_{t=i}^j{a_t})\%p
+$$
+
+符号$\%$表示取余运算符，可以认为$p$远小于$n$。
+
+现请你设计算法计算将其分为$k$段(每段至少包含$1$个元素)后分值和的最大值，并分析该算法的时间复杂度。
+
+例如，将$3,4,7,2$分为$3$段，模数为$p=10$，则可将其分为$(3,4),(7),(2)$这三段，其分值和为$(3+4)\%10+7\%10+2\%10=16$。
+
+\subsection{算法思想}
+
+一个常规的做法是通过递推计算，记$dp[i][j]$为将前$i$个数分成$j$组时各组分值$(\sum{a_k})\%p$和的最大值，则有递推方程：
+
+$$
+dp[i][j]=max(score(i-k,i)+dp[i-k-1][j-1]),\ k=0,1,...,i-1
+$$
+
+上述做法会填满一个$n$行$min(n,m)$列的表格，且通过前缀和计算$score(i-k,i)$时，每个单元格可以在线性时间内计算出结果，故上述做法有三次方时间复杂度。
+
+一个更好的做法是利用$p$远小于$n$优化，优化的关键在于以下性质：
+
+$$
+dp[i][j]+(\sum_{k=i+1}^n{a_k})\%p\le{dp}[i+t][j]+(\sum_{k=i+t+1}^n{a_k})\%p,\ t>0,\  dp[i][j]\equiv{dp}[i+t][j]\ (mod\ p)
+$$
+
+下面证明上述不等式的正确性，由于$dp[i][j]$表示将前$i$个数分成$j$组时各组分值$(\sum{a_t})\%p$和的最大值，其与前$i$个数和的差为$p$的整数倍，有：
+
+$$
+dp[i][j]=\sum_{k=1}^ia_k-\alpha{p},\ \alpha\in{N}
+$$
+
+记$dp[i][j]\equiv{dp}[i+t][j]\equiv{l}\ (mod\ p)$，则有：
+
+$$
+\sum_{k=1}^ia_k-\alpha_1p\equiv\sum_{k=1}^{i+t}a_k-\alpha_2p\equiv{l}\ (mod\ p)
+$$
+$$
+\sum_{k=1}^ia_k\equiv\sum_{k=1}^{i+t}a_k\equiv{l}\ (mod\ p)
+$$
+$$
+\sum_{k=1}^ia_k\equiv\sum_{k=1}^ia_k+\sum_{k=i+1}^{i+t}a_k\equiv{l}\ (mod\ p)
+$$
+$$
+\sum_{k=i+1}^{i+t}a_k\equiv0\ (mod\ p)
+$$
+$$
+\sum_{k=i+1}^{i+t}a_k=\alpha{p},\ \alpha\in{N}
+$$
+
+此时考虑$(\sum_{k=i+1}^n{a_k})\%p$和$(\sum_{k=i+t+1}^n{a_k})\%p$的情况：
+
+$$
+\sum_{k=i+1}^n{a_k}=\sum_{k=i+1}^{i+t}a_k+\sum_{k=i+t+1}^n{a_k}
+$$
+$$
+(\sum_{k=i+1}^n{a_k})\%p=(\sum_{k=i+1}^{i+t}a_k+\sum_{k=i+t+1}^n{a_k})\%p
+$$
+$$
+(\sum_{k=i+1}^n{a_k})\%p=(\alpha{p}+\sum_{k=i+t+1}^n{a_k})\%p
+$$
+$$
+(\sum_{k=i+1}^n{a_k})\%p=(\sum_{k=i+t+1}^n{a_k})\%p
+$$
+
+另一方面，由于$dp[i][j]$表示将前$i$个数分成$j$组时各组分值$(\sum{a_k})\%p$和的最大值，而$dp[i+t][j]$表示将前$i+t$个数分成$j$组时各组分值$(\sum{a_k})\%p$和的最大值，记使$dp[i][j]$最大时，$j$个组分别为$group_{(i,1)},group_{(i,2)},...,group_{(i,j)}$，考虑将前$i+t$个数分成$j$组时的情况：
+
+$$
+group_{(i+t,1)}=group_{(i,1)}
+$$
+$$
+group_{(i+t,2)}=group_{(i,2)}
+$$
+$$
+...
+$$
+$$
+group_{(i+t,j-1)}=group_{(i,j-1)}
+$$
+$$
+group_{(i+t,j)}=group_{(i,j)}\cup(\bigcup_{k=i+1}^{i+t}a_k)
+$$
+
+显然这是一种可行的分组，且由于$\sum_{k=i+1}^{i+t}a_k\equiv0\ (mod\ p)$，此分解下各组分值$(\sum{a_k})\%p$和的最大值为$dp[i][j]$，又因为$dp[i+t][j]$表示将前$i+t$个数分成$j$组时各组分值$(\sum{a_k})\%p$和的最大值，可得：
+
+$$
+dp[i][j]\le{dp}[i+t][j],\ t>0,\  dp[i][j]\equiv{dp}[i+t][j]\ (mod\ p)
+$$
+$$
+dp[i][j]+(\sum_{k=i+1}^n{a_k})\%p\le{dp}[i+t][j]+(\sum_{k=i+t+1}^n{a_k})\%p,\ t>0,\  dp[i][j]\equiv{dp}[i+t][j]\ (mod\ p)
+$$
+
+由于上述性质，我们只要在处理每个$i$时，向前枚举$p$个同余类中的$p$个末尾下标，即可将计算$dp[i][j]$的复杂度从$O(n)$调整到了$O(p)$，由于$p$远小于$n$，这种优化下的时间复杂度是更优的。
+
+上述主要做法均使用$C++$进行了实现并进行了测试，为使格式美观相关代码见文末附录。
+
+\subsection{普通递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{最大分值问题普通递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，整数$m$，为分的段数，整数$p$，为模数，长度为$n$的整数数组$a$}
+\KwOut{整数$ans$，为最大分值}
+
+\Function{$main(n,m,p,a[])$}{
+    \For{$i\leftarrow1\ to\ n$}{
+        $sum[i]\leftarrow{a}[i]+sum[i-1]$\;
+        $dp[i][0]\leftarrow0x8000\_0000$\;
+    }
+    \For{$i\leftarrow1\ to\ n$}{
+        \For{$j\leftarrow1\ to\ min(m,i)$}{
+            \For{$k\leftarrow0\ to\ i-1$}{
+                $dp[i][j]\leftarrow{max}(dp[i][j],(sum[i]-sum[i-k-1])\%p+dp[i-k-1][j-1]$\;
+            }
+        }
+    }
+    \textbf{$return\ dp[n][m]$}\;
+}
+
+\end{algorithm}
+
+主函数中，$2-5$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$6-12$行的循环中，执行次数为：
+
+$$
+\sum_{i=1}^n\sum_{j=1}^{min(k,i)}i
+$$
+
+若$k<=n$，成立：
+
+$$
+\sum_{i=1}^n\sum_{j=1}^{min(k,i)}i\le\sum_{i=1}^n\sum_{j=1}^{k}i=\sum_{j=1}^{k}\sum_{i=1}^ni=k\sum_{i=1}^ni=O(k\cdot{n^2})=O(n^2\cdot{min}(n,k))
+$$
+
+否则，成立：
+
+$$
+\sum_{i=1}^n\sum_{j=1}^{min(k,i)}i=\sum_{i=1}^n\sum_{j=1}^ii=\sum_{i=1}^n i^2=O(n^3)=O(n^2\cdot{min}(n,k))
+$$
+
+因此$6-12$行的循环是$O(n^2\cdot{min}(n,k))$复杂度的，从而普通递推做法的总时间复杂度为$O(n^2\cdot{min}(n,k))$。
+
+\subsection{优化递推做法伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{最大分值问题优化递推做法}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，整数$m$，为分的段数，整数$p$，为模数，长度为$n$的整数数组$a$}
+\KwOut{整数$ans$，为最大分值}
+
+\Function{$main(n,m,p,a[])$}{
+    \For{$i\leftarrow1\ to\ n$}{
+        $sum[i]\leftarrow{a}[i]+sum[i-1]$\;
+        $dp[i][0]\leftarrow0x8000\_0000$\;
+    }
+    \For{$i\leftarrow1\ to\ n$}{
+        \For{$j\leftarrow1\ to\ min(m,i)$}{
+            \For{$k\leftarrow0\ to\ p-1$}{
+                $dp[i][j]\leftarrow{max}(dp[i][j],(sum[i]-sum[last[j-1][k]])\%p+dp[last[j-1][k]][j-1]$\;
+            }
+            $last[j][dp[i][j]\%p]\leftarrow{i}$;
+        }
+    }
+    \textbf{$return\ dp[n][m]$}\;
+}
+
+\end{algorithm}
+
+主函数中，$2-5$行的循环执行次数为$n$，因此是$O(n)$复杂度的，$6-13$行的循环中，最外层和最内层循环的执行次数分别是$n,p$，中间层循环的执行次数是$min(k,i)\le{min}(n,k)$，因此$6-13$行的循环是$O(n\cdot{min}(n,k)\cdot{p})$复杂度的，从而优化递推做法的总时间复杂度为$O(n\cdot{min}(n,k)\cdot{p})$。
+
+\section{附录暨部分算法的实现}
+
+\subsection{数组填充问题普通递推做法}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{
+    backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+    basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+    breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+    breaklines=true,                 % sets automatic line breaking
+    captionpos=bl,                   % sets the caption-position to bottom
+    commentstyle=\color{mygreen},    % comment style
+    deletekeywords={...},            % if you want to delete keywords from the given language
+    escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+    extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+    frame=single,                    % adds a frame around the code
+    keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+    keywordstyle=\color{blue},       % keyword style
+    language=c++,                    % the language of the code
+    morekeywords={*,...},            % if you want to add more keywords to the set
+    numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+    numbersep=5pt,                   % how far the line-numbers are from the code
+    numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+    rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+    showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+    showstringspaces=false,          % underline spaces within strings only
+    showtabs=false,                  % show tabs within strings adding particular underscores
+    stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+    stringstyle=\color{mymauve},     % string literal style
+    tabsize=2,                       % sets default tabsize to 2 spaces
+}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+const int maxn=10000;
+int dp[maxn+5][3],n,l,r;
+
+inline int cal(int mod,int num)
+{
+    int ans=num/3;
+    if (num%3==1 && mod==1) ans++;
+    if (num%3==2 && mod>=1) ans++;
+    return ans;
+}
+
+inline int init(int mod)
+{
+    int gap=max(max(l,r),max(-l,-r))/3*3+3;
+    return cal(mod,r+gap)-cal(mod,l-1+gap);
+}
+
+int main()
+{
+    while (~scanf("%d %d %d",&n,&l,&r))
+    {
+        if (l>r) {puts("0"); continue;}
+        memset(dp,0,sizeof(dp));
+        for (int i=0;i<3;i++) dp[0][i]=init(i);
+        for (int i=1;i<n;i++)
+            for (int j=0;j<3;j++)
+                for (int k=0;k<3;k++)
+                    dp[i][j]+=dp[i-1][k]*dp[0][(j-k+3)%3];
+        printf("%d\n",dp[n-1][0]);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{数组填充问题矩阵快速幂做法}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+const int maxn=10000;
+int matrix[3][3],cnt[3],n,l,r;
+
+inline int cal(int mod,int num)
+{
+    int ans=num/3;
+    if (num%3==1 && mod==1) ans++;
+    if (num%3==2 && mod>=1) ans++;
+    return ans;
+}
+
+inline int init(int mod)
+{
+    int gap=max(max(l,r),max(-l,-r))/3*3+3;
+    return cal(mod,r+gap)-cal(mod,l-1+gap);
+}
+
+void mulCount()
+{
+    int tmp[3];
+    for (int i=0;i<3;i++)
+        tmp[i]=cnt[i],cnt[i]=0;
+    for (int i=0;i<3;i++)
+        for (int j=0;j<3;j++)
+            cnt[j]+=matrix[i][j]*tmp[i];
+    return;
+}
+
+void mulMatrix()
+{
+    int tmp[3][3];
+    for (int i=0;i<3;i++)
+        for (int j=0;j<3;j++)
+        tmp[i][j]=matrix[i][j],matrix[i][j]=0;
+    for (int i=0;i<3;i++)
+        for (int j=0;j<3;j++)
+            for (int k=0;k<3;k++)
+                matrix[i][j]+=tmp[i][k]*tmp[k][j];
+    return;
+}
+
+int main()
+{
+    while (~scanf("%d %d %d",&n,&l,&r))
+    {
+        if (l>r) {puts("0"); continue;}
+        for (int i=0;i<3;i++) cnt[i]=init(i);
+        matrix[0][0]=cnt[0],matrix[0][1]=cnt[1],matrix[0][2]=cnt[2];
+        matrix[1][0]=cnt[2],matrix[1][1]=cnt[0],matrix[1][2]=cnt[1];
+        matrix[2][0]=cnt[1],matrix[2][1]=cnt[2],matrix[2][2]=cnt[0];
+        for (int t=n-1;t;t>>=1)
+        {
+            if (t&1) mulCount();
+            mulMatrix();
+        }
+        printf("%d\n",cnt[0]);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{最长递增子序列问题普通递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+
+const int maxn=1000;
+int n,a[maxn+5],dp[maxn+5],last[maxn+5];
+
+int main()
+{
+	scanf("%d",&n);
+	for (int i=1;i<=n;i++) scanf("%d",&a[i]),dp[i]=1;
+	for (int i=1;i<=n;i++)
+		for (int j=1;j<i;j++)
+			if (a[i]>a[j] && dp[j]+1>=dp[i])
+				dp[i]=dp[j]+1,last[i]=j;
+	int ans=-1,idx=-1,tot=0;
+	for (int i=1;i<=n;i++) if (dp[i]>ans) ans=dp[i],idx=i;
+	while (idx) dp[tot++]=a[idx],idx=last[idx];
+	printf("%d\n",ans);
+	for (int i=tot-1;i>=0;i--) printf("%d ",dp[i]);
+	puts(""); return 0;
+}
+\end{lstlisting}
+
+\subsection{最长递增子序列问题二分优化递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+
+const int maxn=1000;
+int n,a[maxn+5],dp[maxn+5],last[maxn+5];
+
+int main()
+{
+	scanf("%d",&n);
+	int ans=-1,idx=-1,tot=0;
+	for (int i=1;i<=n;i++) scanf("%d",&a[i]);
+	a[0]=0x7fffffff;
+	for (int i=1,l,r;i<=n;i++)
+	{
+		for (l=0,r=n+1;r-l>1;)
+		{
+			int mid=(l+r)>>1;
+			if (a[dp[mid]]>=a[i]) r=mid;
+			else l=mid;
+		}
+		dp[r]=i,last[i]=dp[r-1];
+		if (r>ans) ans=r,idx=i;
+	}
+	while (idx) dp[tot++]=a[idx],idx=last[idx];
+	printf("%d\n",ans);
+	for (int i=tot-1;i>=0;i--) printf("%d ",dp[i]);
+	puts(""); return 0;
+}
+\end{lstlisting}
+
+\subsection{硬币问题暴力做法}
+
+\begin{lstlisting}
+#include <cstdio>
+
+const int maxn=1000;
+double sum,src[maxn+5];
+
+inline int countbit(int num)
+{
+    int ans=0;
+    for (int i=0;i<32;i++) if (num&(1<<i)) ans++;
+    return ans;
+}
+
+inline void cal(int num)
+{
+    double p=1;
+    for (int i=0;i<32;i++)
+        if (num&(1<<i)) p*=src[i];
+        else p*=1-src[i];
+    sum+=p; return;
+}
+
+int main()
+{
+    int n; scanf("%d",&n);
+    for (int i=0;i<n;i++) scanf("%lf",&src[i]);
+    for (int i=0;i<1<<n;i++) if (countbit(i)>n/2) cal(i);
+    printf("%lf\n",sum);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{硬币问题递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+
+const int maxn=1000;
+double sum,src[maxn+5];
+double dp[maxn+5][maxn+5];
+
+int main()
+{
+    int n; scanf("%d",&n);
+    for (int i=1;i<=n;i++) scanf("%lf",&src[i]); dp[0][0]=1;
+    for (int i=1;i<=n;i++) dp[i][0]=dp[i-1][0]*(1-src[i]);
+    for (int i=1;i<=n;i++)
+        for (int j=1;j<=n;j++)
+            dp[i][j]=dp[i-1][j-1]*src[i]+dp[i-1][j]*(1-src[i]);
+    for (int i=n/2+1;i<=n;i++) sum+=dp[n][i];
+    printf("%lf\n",sum);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{鲜花组合问题普通递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+const int maxn=1000;
+int n,m,a[maxn+5];
+int dp[maxn+5][maxn+5];
+
+int main()
+{
+    scanf("%d %d",&n,&m);
+    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
+    for (int i=0;i<=n;i++) dp[i][0]=1;
+    for (int i=1;i<=n;i++)
+        for (int j=1;j<=m;j++)
+            for (int k=0;k<=min(j,a[i]);k++)
+                dp[i][j]+=dp[i-1][j-k];
+    printf("%d\n",dp[n][m]);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{鲜花组合问题优化递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+using namespace std;
+
+const int maxn=1000;
+int n,m,a[maxn+5];
+int dp[maxn+5][maxn+5];
+
+int main()
+{
+    scanf("%d %d",&n,&m);
+    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
+    for (int i=0;i<=n;i++) dp[i][0]=1;
+    for (int i=1;i<=n;i++)
+        for (int j=1;j<=m;j++)
+            dp[i][j]=dp[i][j-1]+dp[i-1][j]-((a[i]>=j)?0:dp[i-1][j-1-a[i]]);
+    printf("%d\n",dp[n][m]);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{最大分值问题普通递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+const int maxn=1000;
+int n,m,p,a[maxn+5];
+int sum[maxn+5],dp[maxn+5][maxn+5];
+
+int main()
+{
+    scanf("%d %d %d",&n,&m,&p);
+    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
+    for (int i=1;i<=n;i++) sum[i]=a[i]+sum[i-1],dp[i][0]=0x80000000;
+    for (int i=1;i<=n;i++)
+        for (int j=1;j<=min(m,i);j++)
+            for (int k=0;k<=i-1;k++)
+                dp[i][j]=max(dp[i][j],(sum[i]-sum[i-k-1])%p+dp[i-k-1][j-1]);
+    printf("%d\n",dp[n][m]);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{最大分值问题优化递推做法}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+const int maxn=1000;
+int n,m,p,a[maxn+5];
+int last[maxn+5][maxn+5];
+int sum[maxn+5],dp[maxn+5][maxn+5];
+
+int main()
+{
+    scanf("%d %d %d",&n,&m,&p);
+    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
+    for (int i=1;i<=n;i++) sum[i]=a[i]+sum[i-1],dp[i][0]=0x80000000;
+    for (int i=1;i<=n;i++)
+        for (int j=1;j<=min(m,i);j++)
+        {
+            for (int k=0;k<p;k++)
+                dp[i][j]=max(dp[i][j],(sum[i]-sum[last[j-1][k]])%p+dp[last[j-1][k]][j-1]);
+            last[j][dp[i][j]%p]=i;
+        }
+    printf("%d\n",dp[n][m]);
+    return 0;
+}
+\end{lstlisting}
+
+\end{document}

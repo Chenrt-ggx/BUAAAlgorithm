@@ -1,0 +1,631 @@
+\documentclass{article}
+
+% Language setting
+% Replace `English' with e.g. `Spanish' to change the document language
+\usepackage[english]{babel}
+\usepackage[fontset=ubuntu]{ctex}
+
+% Set page size and margins
+% Replace `letter paper' with`a4paper' for UK/EU standard size
+\usepackage[a4paper,top=1.5cm,bottom=1.5cm,left=2cm,right=2cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage[ruled]{algorithm2e}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\SetKwProg{Function}{function}{:}{end}
+
+\title{\heiti 计算机学院《算法设计与分析》第三次作业}
+\author{114514 李田所}
+
+\begin{document}
+\maketitle
+
+\section{吃糖果问题}
+
+给定$n$个糖果盒子，每个盒子糖果数量为$a_i$，需要从一些盒子中挑选一些糖果吃掉，使任意两个编号相邻盒子中糖的数量之和小于$x$。
+
+请设计一个高效算法计算最少需要吃掉几颗糖，并分析该算法时间复杂度。
+
+\subsection{算法思想}
+
+容易想到从左到右扫描，遇到不满足两个编号相邻盒子中糖的数量之和小于$x$时优先处理右边的盒子，可以使吃掉的糖数尽可能少，具体的，第$i$个盒子和第$i+1$个盒子不满足和小于$x$时，优先减少第$i+1$个盒子中的糖，直到无法满足要求再减少第$i$个盒子中的糖。
+
+由于只要从左向右扫描数组$a$一次，且第$i$个盒子和第$i+1$个盒子不满足和小于$x$时，减少两个盒子中糖的过程是常数复杂度的，显然此算法的时间复杂度是线性的。
+
+\subsection{正确性说明}
+
+从左到右扫描的过程中，遇到不满足两个编号相邻盒子中糖的数量之和小于$x$时需要进行处理，处理策略包括以下三种：
+
+\begin{itemize}[itemindent=3em]
+    \item 第$i$个盒子和第$i+1$个盒子不满足和小于$x$时，优先减少第$i+1$个盒子中的糖，直到无法满足要求再减少第$i$个盒子中的糖，记两个盒子中减少的糖数分别为$sub^1_i,sub^1_{i+1}$。
+    \item 第$i$个盒子和第$i+1$个盒子不满足和小于$x$时，优先减少第$i$个盒子中的糖，直到无法满足要求再减少第$i+1$个盒子中的糖，记两个盒子中减少的糖数分别为$sub^2_i,sub^2_{i+1}$。
+    \item 第$i$个盒子和第$i+1$个盒子不满足和小于$x$时，分别减少第$i$个盒子中的糖和第$i+1$个盒子中的糖，记两个盒子中减少的糖数分别为$sub^3_i,sub^3_{i+1}$。
+\end{itemize}
+
+对于上述三种策略，显然有以下两式成立：
+
+$$
+sub^1_{i+1}\ge{sub}^3_{i+1}\ge{sub}^2_{i+1},\ sub^1_i\le{sub}^3_i\le{sub}^2_i
+$$
+
+另一方面，注意到以下性质：
+
+\begin{itemize}[itemindent=3em]
+    \item 减少$a_i$能使第$i-1$个盒子与第$i$个盒子中糖数的总和$a_{i-1}+a_i$减少$sub_i$、第$i$个盒子与第$i+1$个盒子中糖数的总和$a_i+a_{i+1}$减少至$x-1$。
+    \item 减少$a_{i+1}$能使第$i$个盒子与第$i+1$个盒子中糖数的总和$a_i+a_{i+1}$减少至$x-1$、第$i+1$个盒子与第$i+2$个盒子中糖数的总和$a_{i+1}+a_{i+2}$减少$sub_{i+1}$。
+\end{itemize}
+
+在从左向右的处理下，第$i$个盒子左侧不存在不满足数量之和小于$x$的情况，因此“第$i-1$个盒子与第$i$个盒子中糖数的总和$a_{i-1}+a_i$减少$sub_i$”是没有意义的，而第$i+1$个盒子右侧可能存在不满足数量之和小于$x$的情况，因此“第$i+1$个盒子与第$i+2$个盒子中糖数的总和$a_{i+1}+a_{i+2}$减少$sub_{i+1}$”是有利于减少吃掉的总糖数的。
+
+由$sub^1_{i+1}\ge{sub}^3_{i+1}\ge{sub}^2_{i+1}$可知，上述第一种处理策略优于上述第三种处理策略优于上述第二种处理策略，按照第一种策略进行的算法正确。
+
+\subsection{伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{吃糖果问题}
+\LinesNumbered
+\KwIn{整数$n$，为盒子数量，整数$x$，为糖数上限，长度为$n$的数组$a$，为各盒子内的糖果数}
+\KwOut{整数$ans$，为吃掉糖数的最小值}
+
+\Function{$main(n,x,a[])$}{
+    $ans\leftarrow0$\;
+    \For{$i\leftarrow1\ to\ n-1$}{
+        \If{$a[i-1]+a[i]\ge{x}$}{
+            $gap\leftarrow{a}[i-1]+a[i]-x+1$\;
+            \eIf{$gap\le{a}[i]$}{
+                $a[i]\leftarrow{a}[i]-gap$\;
+            } {
+                $a[i]\leftarrow0$\;
+                $a[i-1]\leftarrow{a}[i-1]-gap+a[i]$\;
+            }
+            $ans\leftarrow{ans}+gap$\;
+        }
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\end{algorithm}
+
+主函数中，第$3-14$行的循环执行次数为$n-1$，每次循环内是$O(1)$复杂度的，因此是$O(n)$复杂度的，从而此做法的总时间复杂度为$O(n)$。
+
+\section{排队接水问题}
+
+给定$n$个人排队接水，已知每个人接水时间为$t_i$，仅有一个水龙头，因此他们依次排成一队接水，每个人接水等待时间记为$w_i$(从第一个人接水开始，到自己接完为止)，总等待时间为$\sum_i{w_i}$。
+
+请设计一个高效算法，安排这$n$个人的接水顺序，使得总等待时间最少，并分析该算法时间复杂度。
+
+\subsection{算法思想}
+
+考虑第$i$个人，其等待的时间显然是在他前面接水的所有人接水时间的总和，要使第$i$个人等待时间最短则需要使他前面的$i-1$个人为接水时间最短的的$i-1$个人，从而可知第一个人是接水时间最短的人，第二个人是接水时间第二短的人，以此类推即得全部$n$个人按照接水时间从小到大的顺序接水时，总等待时间最少。
+
+由于我们需要进行的工作是且仅是排序，显然此算法的时间复杂度是线性乘对数的，特别的，对于每个人的接水时间$t_i$为整数的情况，可以通过基数排序将算法的时间复杂度优化到线性。
+
+\subsection{正确性说明}
+
+考虑总等待时间最少时$n$个人接水的顺序$Opt_1,Opt_2,...,Opt_n$和按照上述接水时间从小到大策略得到的接水顺序$Ans_1,Ans_2,...,Ans_n$，假设两者不同且两者的首次不同发生在$diff$处，显然有$t^{Ans}_{diff}<t^{Opt}_{diff}$，又因为接水时间从小到大的性质和$diff$为首次不同，可得：
+
+$$
+t^{Ans}_1\le{t}^{Ans}_2\le...\le{t}^{Ans}_{diff}
+$$
+$$
+t^{Ans}_i=t^{Opt}_i,\ i=1,2,...,diff-1
+$$
+
+从而可得下式成立：
+
+$$
+t^{Opt}_1\le{t}^{Opt}_2\le...\le{t}^{Opt}_{diff-1}<t^{Opt}_{diff}
+$$
+
+注意到$Opt_1,Opt_2,...,Opt_n$是$1,2,...,n$的一个全排列，存在$index>diff$使$t^{Opt}_{index}=t^{Ans}_{diff}$，此时在最优解上交换$diff$和$index$，考虑总等待时间的变化：
+
+\begin{itemize}[itemindent=3em]
+    \item 对于第$i$个人，其中$i\le{diff}$或$i\ge{index}$，其等待时间$w_i$为从第一个人接水开始，到自己接完为止的时间，因此这些人的等待时间保持不变。
+    \item 对于第$i$个人，其中$diff<i<index$，记其调整前等待时间为$w^{old}_i$，调整后等待时间为$w^{new}_i$，则有$w^{old}_i-t^{Opt}_{diff}=w^{new}_i-t^{Opt}_{index}$，即$w^{new}_i-w^{old}_i=t^{Opt}_{index}-t^{Opt}_{diff}={t}^{Ans}_{diff}-t^{Opt}_{diff}<0$，因此这些人的等待时间减小。
+\end{itemize}
+
+由上可知，可以在最优解的基础上构造一个更优解，这与最优性矛盾，从而假设不成立，最优解一定满足接水时间从小到大，因此上述算法正确。
+
+\subsection{伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{排队接水问题}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，长度为$n$的数组$t$，为每个人的接水时间}
+\KwOut{长度为$n$的数组$ans$，为$n$个人的接水顺序}
+
+\Function{$main(n,t[])$}{
+    $pair\leftarrow[0,...,n-1]$\;
+    \For{$i\leftarrow0\ to\ n-1$}{
+        $pair[i].time\leftarrow{t}[i]$\;
+        $pair[i].index\leftarrow{i+1}$\;
+    }
+    $sort\ pair\ by\ time$\;
+    $ans\leftarrow[0,...,n-1]$\;
+    \For{$i\leftarrow0\ to\ n-1$}{
+        $ans[i]\leftarrow{pair}[i].index$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\end{algorithm}
+
+主函数中，第$3-6$行的循环执行次数为$n$，因此是$O(n)$复杂度的，第$7$行的排序是$O(n log n)$复杂度的(不考虑基数排序)，第$9-11$行的循环的执行次数为$n$，因此是$O(n)$复杂度的，从而此做法的总时间复杂度为$O(n log n)$。
+
+\section{数组分段问题}
+
+给定$n$个数的数组$A=(a_1,a_2,···,a_n)$，现需将其分为$k$段，并要求每段中的元素连续，且每段至少包含一个元素。每段取最小值记为$m_i$，该分段方法的分值记为$max_{1\le{i}\le{k}}m_i$。
+
+请设计一个高效算法，计算分段方法的最大分值，并分析该算法时间复杂度。
+
+\subsection{算法思想}
+
+要计算分段后最小值的最大值，一个直观的想法是先把最大值单独分在一段，再把其它值分成$k-1$段，此时分段后各段最小值的最大值显然是分段前的最大值，而在两种情况下这种做法将失效：
+
+\begin{itemize}[itemindent=3em]
+    \item 对于分成$k=1$段的情况，不一定可以将最大值单独分在一段，此时显然可得分段后各段最小值的最大值是分段前的最小值。
+    \item 对于分成$k=2$段的情况，不一定可以将最大值单独分在一段，此时只要枚举全部分割点，分别求出此分段方式下各段最小值的最大值，选取使此最大值最大的方案即可。
+\end{itemize}
+
+对于$k\ne2$的情况，我们需要进行的工作是且仅是寻找最小或最大值，显然时间复杂度是线性的，对于$k=2$的情况，通过在线性时间内求出前缀最小值和后缀最小值，对每一个分割点可以在常数时间内求出两侧的最小值，进而得到最小值的最大值，从而对于$k=2$的情况时间复杂度同样是线性的。由此可知此算法的时间复杂度是线性的。
+
+\subsection{正确性说明}
+
+对于$k=1$的情况，答案通过定义得出，显然正确。
+
+对于$k=2$的情况，答案通过枚举全部可能的情况得出，显然正确。
+
+对于$k>=2$的情况，我们知道最优解不会超过$max(a_1,a_2,···,a_n)$，而通过把最大值单独分在一段，按照上述算法我们可以给出一个各段最小值的最大值为$max(a_1,a_2,···,a_n)$的解，由按照上述算法给出的解即理论上限，可知上述算法正确。
+
+\subsection{伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{数组分段问题}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，整数$k$，为分段数，长度为$n$的数组$a$，为各个元素}
+\KwOut{整数$ans$，为分段方法的最大分值}
+
+\Function{$init\_mins(lmin[],rmin[],a[]))$}{
+    $lmin[0]\leftarrow{a}[0]$\;
+    $rmin[n-1]\leftarrow{a}[n-1]$\;
+    \For{$i\leftarrow1\ to\ n-1$}{
+        $lmin[i]=min(lmin[i-1],a[i])$\;
+    }
+    \For{$i\leftarrow{n}-2\ to\ 0$}{
+        $rmin[i]=min(rmin[i+1],a[i])$\;
+    }
+}
+
+\end{algorithm}
+
+$init\_mins$函数中，第$4-6$行和$7-9$行的循环分别计算了数组$a$的前缀最小值和后缀最小值，执行次数均为$n-1$，因此是$O(n)$复杂度的，从而此函数的总时间复杂度为$O(n)$。
+
+\begin{algorithm}[H]
+
+\caption{数组分段问题}
+\LinesNumbered
+\KwIn{整数$n$，为数组长度，整数$k$，为分段数，长度为$n$的数组$a$，为各个元素}
+\KwOut{整数$ans$，为分段方法的最大分值}
+
+\Function{$main(n,k,a[])$}{
+    \If{$k=1$}{
+        \textbf{$return\ min\ element\ in\ a$}\;
+    }
+    \If{$k\ne2$}{
+        \textbf{$return\ max\ element\ in\ a$}\;
+    }
+    $lmin\leftarrow[0,...,n-1]$\;
+    $rmin\leftarrow[0,...,n-1]$\;
+    $call\ init\_mins(lmin,rmin,a)$\;
+    $ans\leftarrow-infinity$\;
+    \For{$i\leftarrow1\ to\ n-1$}{
+        $ans\leftarrow{max}(ans,max(lmin[i-1],rmin[i]))$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\end{algorithm}
+
+主函数中，第$3,6$行分别求解了数组$a$中各元素的最小值和最大值，由于$a$是无序数组，需要扫描整个数组，因此均是$O(n)$复杂度的。第$10$行调用了$O(n)$复杂度的$init\_mins$函数，第$12-14$行的循环执行次数为$n-1$，因此是$O(n)$复杂度的，从而此做法的总时间复杂度为$O(n)$。
+
+\section{纪念品分组问题}
+
+给定$n$件纪念品，每件价值$v_i$，需要把纪念品分组，但每组最多只能包括两件纪念品，并且每组纪念品的价格之和不能超过一个给定的整数$m$。
+
+请设计一个高效的算法，计算所有分组方案中，最少的分组数量，并分析该算法时间复杂度。
+
+\subsection{算法思想}
+
+自然想到对于每一个纪念品，选择价格尽快能大的另一个纪念品，使两者价格之和不超过给定的整数$m$，如果不存在这样的另一个纪念品，则将这个纪念品单独分成一组。
+
+具体的，可以对$n$件纪念品按价值从小到大排序后从两端开始枚举，维护指向最左端的指针$lptr$和指向最右端的指针$rptr$，如果$v_{lptr}+v_{rptr}$不超过$m$，则可以将两者分到一组，$lptr$向右移动一个单位，$rptr$向左移动一个单位，增加一个分组；否则根据有序性$rptr$对应的纪念品也无法和其它没有分组的纪念品分组，故将其单分一组，$rptr$向左移动一个单位，增加一个分组。
+
+由于我们需要进行的工作是排序和扫描整个数组，显然此算法的时间复杂度是线性乘对数的，特别的，对于每件纪念品的价值$v_i$为整数的情况，可以通过基数排序将算法的时间复杂度优化到线性。而扫描整个数组的时间复杂度显然是线性的，由此可知此算法的时间复杂度是线性乘对数或线性的。
+
+\subsection{正确性说明}
+
+以$G=<1,j>,i<j$表示纪念品$i$和纪念品$j$分到了一组(对各个纪念品按价值从小到大的顺序标号)，以$G=<i,-1>$表示纪念品$i$单独分成一组，一个按上述策略得到的分组方案为$G^{Ans}_1,G^{Ans}_2,...,G^{Ans}_{mans}$，一个最优的分组方案为$G^{Opt}_1,G^{Opt}_2,...G^{Opt}_{mopt}$。
+
+假设按照上述策略得到的分组方案和最优分组方案不同，则存在$diff$满足$G^{Ans}_{diff}\ne{G}^{Opt}_{diff}$，其中$G^{Ans}_{diff}=<i,x>$而$G^{Opt}_{diff}=<i,y>$，其中$x\ne{y}$，且对于任意$k<i,G^{Ans}_{p}=<k,a>,G^{Opt}_{q}=<k,b>$有$a=b$(即$i$是“首次不同”)。
+
+如果$y=-1$则有$x\ne-1$，此时存在$G^{Opt}_{p}=<x,a>$或$G^{Opt}_{p}=<a,x>$，又有$G^{Opt}_{diff}=<i,-1>$，因此可将最优解调整为$G^{Opt}_{p}=<a,-1>$(此处必然有$a\ne-1$，否则与解的最优性矛盾)，$G^{Opt}_{diff}=<i,x>$，可知调整后的解同样是最优解，以调整后的最优解代替原最优解，重复上述过程。
+
+如果$y\ne-1$即存在$k>i,v_k\ge{v}_i$且$v_i+v_k\le{m}$，则按照上述策略，必有$x\ne-1$，此时存在$G^{Opt}_{p}=<x,a>$或$G^{Opt}_{p}=<a,x>$，考虑$G^{Ans}_{diff}=<i,x>,G^{Opt}_{diff}=<i,y>$中$x>y$和$x<y$的情况：
+
+\begin{itemize}[itemindent=3em]
+    \item 若$x>y$成立，可将最优解调整为$G^{Opt}_{p}=<y,a>$或$G^{Opt}_{p}=<a,y>$(由$v_y+v_a\le{v}_x+v_a\le{m}$知调整可行)，$G^{Opt}_{diff}=<i,x>$，可知调整后的解同样是最优解，以调整后的最优解代替原最优解，重复上述过程。
+    \item 若$x<y$成立，由上述策略知此时必有$v_x=v_y$，同样将最优解调整为$G^{Opt}_{p}=<y,a>$或$G^{Opt}_{p}=<a,y>$，$G^{Opt}_{diff}=<i,x>$，可知调整后的解同样是最优解，以调整后的最优解代替原最优解，重复上述过程。
+\end{itemize}
+
+由此可知，按照上述策略构造出的解是最优解，上述算法正确。
+
+\subsection{伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{纪念品分组问题}
+\LinesNumbered
+\KwIn{整数$n$，为纪念品数量，整数$m$，为价值之和的上限，长度为$n$的数组$v$，为各纪念品价值}
+\KwOut{整数$ans$，最少分组数量}
+
+\Function{$main(n,m,v[])$}{
+    $sort\ v\ by\ value$\;
+    $ans\leftarrow0$\;
+    $lptr\leftarrow0$\;
+    $rptr\leftarrow{n}-1$\;
+    \While{$lptr\le{rptr}$}{
+        \If{$v[lptr]+v[rptr]\le{m}$}{
+            $lptr\leftarrow{lptr}+1$\;
+        }
+        $rptr\leftarrow{rptr}-1$\;
+        $ans\leftarrow{ans}+1$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\end{algorithm}
+
+主函数中，第$2$行的排序是$O(n log n)$复杂度的(不考虑基数排序)，第$6-12$行的循环的执行次数至少为$n/2$，至多为$n$，因此是$O(n)$复杂度的，从而此做法的总时间复杂度为$O(n log n)$。
+
+\section{迷宫逃离问题}
+
+给定一个$m\times{n}$的迷宫，其入口和出口分别为($1,1$)和($m,n$)。每个格子有两种状态：
+
+\begin{enumerate}[itemindent=3em]
+    \item $c_{i,j}=0$，表示这个格子是空格子，可以通过；
+    \item $c_{i,j}=1$，表示这个格子是障碍物，不可通过。
+\end{enumerate}
+
+入口($1,1$)和出口($m,n$)均为空格子。在迷宫中可从某个格子($i,j$)移动到与其相邻的空格子($(i,j−1)$，$(i,j+1)$，$(i−1,j)$，$(i+1,j)$其中之一)，消耗体力为$1$。
+
+现可将至多$1$个障碍物移除，使其对应的格子的变为空格子。请在此基础上设计一个尽可能高效的算法，求出从入口($1,1$)到出口($m,n$)需消耗的最小体力，并分析其时间复杂度。
+
+\subsection{算法思想}
+
+自然想到只要计算出从起点到终点的最短距离，起点到各个障碍物的最短距离，终点到各个障碍物的最短距离，记障碍物个数为$k$，通过下式得到计算出答案即可：
+\begin{align*}
+ans= & minimum(\\
+& \ \ \ \ Distance(begin,end),\\
+& \ \ \ \ Distance(begin,obstacle_1)+Distance(end,obstacle_1),\\
+& \ \ \ \ Distance(begin,obstacle_2)+Distance(end,obstacle_2),\\
+& \ \ \ \ ...,\\
+& \ \ \ \ Distance(begin,obstacle_k)+Distance(end,obstacle_k)\\
+& )
+\end{align*}
+
+从起点到终点的最短距离，起点到各个障碍物的最短距离，终点到各个障碍物的最短距离可以通过从起点开始的一次$BFS$和从终点开始的一次$BFS$得到，对于$n\times{m}$的矩阵，时间复杂度显然是$n\times{m}$的。
+
+计算最小值的过程实质上是枚举全部$k$个障碍物，由于障碍物个数不超过$n\times{m}$，这一部分的复杂度不会超过$n\times{m}$，由此可知此算法的时间复杂度是$n\times{m}$的。
+
+\subsection{正确性说明}
+
+可将至多$1$个障碍物移除的情况下，起点到终点的最短距离可能是：
+
+\begin{itemize}[itemindent=3em]
+    \item 不经过任何一个障碍物，此时的最短距离为不考虑移除障碍物时的最短距离。
+    \item 经过且仅经过一个(即要移除的)障碍物$i$，此时的最短距离为起点到此障碍物的，不考虑移除障碍物时的最短距离，与终点到此障碍物的，不考虑移除障碍物时的最短距离之和。
+\end{itemize}
+
+因此上述做法枚举了全部可能的情况，显然正确。
+
+\subsection{伪代码与复杂度分析}
+
+\begin{algorithm}[H]
+
+\caption{迷宫逃离问题}
+\LinesNumbered
+\KwIn{整数$n$，为迷宫行数，整数$m$，为迷宫列数，$n\times{m}$的$0-1$数组$map$，为各个格子的状态}
+\KwOut{整数$ans$，为从入口($1,1$)到出口($m,n$)需消耗的最小体力}
+
+\Function{$check(x,y,n,m,vis[][])$}{
+    \If{$x<0\ or\ x\ge{n}$}{
+        \textbf{$return\ false$}\;
+    }
+    \If{$y<0\ or\ y\ge{m}$}{
+        \textbf{$return\ false$}\;
+    }
+    \textbf{$return\ vis[x][y]=0$}\;
+}
+
+\end{algorithm}
+
+$check$函数中，全部操作显然都是$O(1)$复杂度的，从而此函数的总时间复杂度为$O(1)$。
+
+\begin{algorithm}[H]
+
+\caption{迷宫逃离问题}
+\LinesNumbered
+\KwIn{整数$n$，为迷宫行数，整数$m$，为迷宫列数，$n\times{m}$的$0-1$数组$map$，为各个格子的状态}
+\KwOut{整数$ans$，为从入口($1,1$)到出口($m,n$)需消耗的最小体力}
+
+\Function{$search(x,y,n,m,map[][],ans[][])$}{
+    $next\leftarrow[(1,0),(-1,0),(0,1),(0,-1)]$\;
+    $vis\leftarrow[0,...,n-1][0,...,m-1]$\;
+    \For{$i\leftarrow0\ to\ n-1$}{
+        \For{$j\leftarrow0\ to\ m-1$}{
+            $vis[i][j]\leftarrow0$\;
+        }
+    }
+    $vis[x][y]\leftarrow1$\;
+    $queue\leftarrow{empty}\ queue$\;
+    $push\ (x,y)\ to\ queue$\;
+    \While{$queue\ is\ not\ empty$}{
+        $(head_x,head_y)\leftarrow{head}\ of\ queue$\;
+        $remove\ head\ of\ queue$\;
+        \For{$i\leftarrow0\ to\ 3$}{
+            $(move_x,move_y)\leftarrow{next}[i]$\;
+            $(new_x,new_y)\leftarrow(head_x+move_x,head_y+move_y)$\;
+            \If{$got\ true\ from\ check(new_x,new_y,n,m,vis)$}{
+                $vis[new_x][new_y]\leftarrow1$\;
+                $ans[new_x][new_y]\leftarrow{ans}[head_x][head_y]+1$\;
+                \If{$map[new_x][new_y]\ne1$}{
+                    $push\ (new_x,new_y)\ to\ queue$\;
+                }
+            }
+        }
+    }
+}
+
+\end{algorithm}
+
+$search$函数中，第$4-8$行的二层循环初始化了数组$vis$，执行次数为$n m$，因此是$O(n m)$复杂度的，第$12-26$行执行了一次$BFS$，$map$中的每一个点至多被访问一次，且每次访问是$O(1)$复杂度的，因此是$O(n m)$复杂度的。从而此函数的总时间复杂度为$O(n m)$。
+
+\begin{algorithm}[H]
+
+\caption{迷宫逃离问题}
+\LinesNumbered
+\KwIn{整数$n$，为迷宫行数，整数$m$，为迷宫列数，$n\times{m}$的$0-1$数组$map$，为各个格子的状态}
+\KwOut{整数$ans$，为从入口($1,1$)到出口($m,n$)需消耗的最小体力}
+
+\Function{$main(n,m,map[][])$}{
+    $blocks\leftarrow[0,...,n\times{m}-1],k\leftarrow0$\;
+    $from\_end\leftarrow[0,...,n-1][0,...,m-1]$\;
+    $from\_begin\leftarrow[0,...,n-1][0,...,m-1]$\;
+    \For{$i\leftarrow0\ to\ n-1$}{
+        \For{$j\leftarrow0\ to\ m-1$}{
+            \If{$map[i][j]=1$}{
+                $blocks[k]\leftarrow(i,j)$\;
+                $k\leftarrow{k}+1$\;
+            }
+            $from\_end[i][j]\leftarrow0$\;
+            $from\_begin[i][j]\leftarrow0$\;
+        }
+    }
+    $call\ search(0,0,n,m,map,from\_begin)$\;
+    $call\ search(n-1,m-1,n,m,map,from\_end)$\;
+    $ans\leftarrow{from\_begin}[n-1][m-1]$\;
+    \For{$i\leftarrow0\ to\ k-1$}{
+        $(x,y)\leftarrow{blocks}[i]$\;
+        $ans\leftarrow{min}(ans,from\_begin[x][y]+from\_end[x][y])$\;
+    }
+    \textbf{$return\ ans$}\;
+}
+
+\end{algorithm}
+
+主函数中，第$5-14$行的二层循环初始化了数组$from\_begin$、$from\_end$和$blocks$，其中$blocks$的长度$k$不超过$n m$，执行次数为$n m$，因此是$O(n m)$复杂度的，第$15$和$16$行分别调用了一次$search$函数，复杂度均为$O(n m)$，第$18-21$行的循环的执行次数为$k$，每次循环内是$O(1)$复杂度的，且$k$不超过$n m$，因此复杂度不超过$O(n m)$，从而此做法的总时间复杂度为$O(n m)$。
+
+\section{附录暨部分算法的实现}
+
+\subsection{吃糖果问题C++实现}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{
+    backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+    basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+    breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+    breaklines=true,                 % sets automatic line breaking
+    captionpos=bl,                   % sets the caption-position to bottom
+    commentstyle=\color{mygreen},    % comment style
+    deletekeywords={...},            % if you want to delete keywords from the given language
+    escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+    extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+    frame=single,                    % adds a frame around the code
+    keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+    keywordstyle=\color{blue},       % keyword style
+    language=c++,                    % the language of the code
+    morekeywords={*,...},            % if you want to add more keywords to the set
+    numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+    numbersep=5pt,                   % how far the line-numbers are from the code
+    numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+    rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+    showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+    showstringspaces=false,          % underline spaces within strings only
+    showtabs=false,                  % show tabs within strings adding particular underscores
+    stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+    stringstyle=\color{mymauve},     % string literal style
+    tabsize=2,                       % sets default tabsize to 2 spaces
+}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+int main()
+{
+    int n,x,ans=0; scanf("%d %d",&n,&x);
+    vector<int> a(n); for (int i=0;i<n;i++) scanf("%d",&a[i]);
+    for (int i=1;i<n;i++) if (a[i-1]+a[i]>=x)
+    {
+        int gap=a[i-1]+a[i]-x+1;
+        if (gap<=a[i]) a[i]-=gap;
+        else a[i-1]-=gap-a[i],a[i]=0;
+        ans+=gap;
+    }
+    printf("%d\n",ans);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{排队接水问题C++实现}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main()
+{
+    int n; scanf("%d",&n);
+    vector<pair<int,int>> a(n);
+    for (int i=0,val;i<n;i++) scanf("%d",&val),a[i].first=val,a[i].second=i+1;
+    sort(a.begin(),a.end(),[](pair<int,int> x,pair<int,int> y){return x.first<y.first;});
+    for (int i=0;i<n;i++) printf("%d ",a[i].second);
+    putchar('\n'); return 0;
+}
+\end{lstlisting}
+
+\subsection{数组分段问题C++实现}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+int main()
+{
+    int n,k,ans; scanf("%d %d",&n,&k);
+    vector<int> a(n); for (int i=0;i<n;i++) scanf("%d",&a[i]);
+    if (k==1) {ans=0x7fffffff; for (int i=0;i<n;i++) ans=min(ans,a[i]);}
+    else if (k!=2) {ans=0x80000000; for (int i=0;i<n;i++) ans=max(ans,a[i]);}
+    else
+    {
+        vector<int> lmin(n),rmin(n);
+        lmin[0]=a[0],rmin[n-1]=a[n-1],ans=0x80000000;
+        for (int i=1;i<n;i++) lmin[i]=min(lmin[i-1],a[i]);
+        for (int i=n-2;i>=0;i--) rmin[i]=min(rmin[i+1],a[i]);
+        for (int i=1;i<n;i++) ans=max(ans,max(lmin[i-1],rmin[i]));
+    }
+    printf("%d\n",ans);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{纪念品分组问题C++实现}
+
+\begin{lstlisting}
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main()
+{
+    int n,m,ans=0; scanf("%d %d",&n,&m);
+    vector<int> v(n); for (int i=0;i<n;i++) scanf("%d",&v[i]);
+    sort(v.begin(),v.end());
+    int lptr=0,rptr=n-1;
+    while (lptr<=rptr) lptr+=v[lptr]+v[rptr]<=m,rptr--,ans++;
+    printf("%d\n",ans); return 0;
+}
+\end{lstlisting}
+
+\subsection{迷宫逃离问题C++实现}
+
+\begin{lstlisting}
+#include <queue>
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+inline bool check(int x,int y,int n,int m,vector<vector<bool>> vis)
+{
+    if (x<0 || x>=n) return false;
+    if (y<0 || y>=m) return false;
+    return !vis[x][y];
+}
+
+inline void display(vector<vector<int>> map)
+{
+    for (vector<int> i : map)
+    {
+        for (int j : i) printf("%02d ",j);
+        putchar('\n');
+    }
+    return;
+}
+
+inline void search(int x,int y,int n,int m,vector<vector<int>> map,vector<vector<int>>& ans)
+{
+    static int next[4][2]={{1,0},{-1,0},{0,1},{0,-1}};
+    vector<vector<bool>> vis(n,vector<bool>(m,0));
+    vis[x][y]=true;
+    queue<pair<int,int>> que;
+    que.push(pair<int,int>(x,y));
+    while (!que.empty())
+    {
+        pair<int,int> node=que.front(); que.pop();
+        for (int i=0;i<4;i++)
+        {
+            int new_x=node.first+next[i][0];
+            int new_y=node.second+next[i][1];
+            if (check(new_x,new_y,n,m,vis))
+            {
+                vis[new_x][new_y]=true;
+                ans[new_x][new_y]=ans[node.first][node.second]+1;
+                if (!map[new_x][new_y]) que.push(pair<int,int>(new_x,new_y));
+            }
+        }
+    }
+    return;
+}
+
+int main()
+{
+    int n,m; scanf("%d %d",&n,&m);
+    vector<pair<int,int>> blocks;
+    vector<vector<int>> map(n,vector<int>(m,0));
+    for (int i=0,val;i<n;i++) for (int j=0;j<m;j++)
+    {
+        scanf("%d",&val);
+        map[i][j]=val;
+        if (val) blocks.push_back(pair<int,int>(i,j));
+    }
+    vector<vector<int>> from_end(n,vector<int>(m,0));
+    vector<vector<int>> from_begin(n,vector<int>(m,0));
+    search(0,0,n,m,map,from_begin);
+    search(n-1,m-1,n,m,map,from_end);
+    // putchar('\n'),display(from_begin);
+    // putchar('\n'),display(from_end);
+    int ans=from_begin[n-1][m-1];
+    for (pair<int,int> i : blocks)
+        ans=min(ans,from_begin[i.first][i.second]+from_end[i.first][i.second]);
+    printf("%d\n",ans);
+    return 0;
+}
+\end{lstlisting}
+
+\end{document}
