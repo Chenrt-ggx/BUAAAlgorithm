@@ -27,9 +27,6 @@ void solve(int l, int r)
         return;
     int mid = (l + r) >> 1;
     solve(l, mid), solve(mid + 1, r);
-    // printf("%d %d %d\n",l,mid,r);
-    // for (int i=l;i<=mid;i++) printf("%d ",sum[i]); puts("");
-    // for (int i=mid+1;i<=r;i++) printf("%d ",sum[i]); puts("");
     for (int lr = mid, rr = r; lr >= l; lr--)
     {
         while (sum[rr] - sum[lr] > spl && rr > mid)
@@ -38,7 +35,7 @@ void solve(int l, int r)
             break;
         ans += rr - mid;
     }
-    merge(l, mid, r); // puts("");
+    merge(l, mid, r);
     return;
 }
 

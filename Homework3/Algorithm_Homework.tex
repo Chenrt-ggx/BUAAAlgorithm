@@ -658,8 +658,6 @@ int main()
     vector<vector<int>> from_begin(n, vector<int>(m, 0));
     search(0, 0, n, m, map, from_begin);
     search(n - 1, m - 1, n, m, map, from_end);
-    // putchar('\n'),display(from_begin);
-    // putchar('\n'),display(from_end);
     int ans = from_begin[n - 1][m - 1];
     for (pair<int, int> i : blocks)
         ans = min(ans, from_begin[i.first][i.second] + from_end[i.first][i.second]);

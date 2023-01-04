@@ -771,35 +771,42 @@ $$
 #include <algorithm>
 using namespace std;
 
-const int maxn=10000;
-int dp[maxn+5][3],n,l,r;
+const int maxn = 10000;
+int dp[maxn + 5][3], n, l, r;
 
-inline int cal(int mod,int num)
+inline int cal(int mod, int num)
 {
-    int ans=num/3;
-    if (num%3==1 && mod==1) ans++;
-    if (num%3==2 && mod>=1) ans++;
+    int ans = num / 3;
+    if (num % 3 == 1 && mod == 1)
+        ans++;
+    if (num % 3 == 2 && mod >= 1)
+        ans++;
     return ans;
 }
 
 inline int init(int mod)
 {
-    int gap=max(max(l,r),max(-l,-r))/3*3+3;
-    return cal(mod,r+gap)-cal(mod,l-1+gap);
+    int gap = max(max(l, r), max(-l, -r)) / 3 * 3 + 3;
+    return cal(mod, r + gap) - cal(mod, l - 1 + gap);
 }
 
 int main()
 {
-    while (~scanf("%d %d %d",&n,&l,&r))
+    while (~scanf("%d %d %d", &n, &l, &r))
     {
-        if (l>r) {puts("0"); continue;}
-        memset(dp,0,sizeof(dp));
-        for (int i=0;i<3;i++) dp[0][i]=init(i);
-        for (int i=1;i<n;i++)
-            for (int j=0;j<3;j++)
-                for (int k=0;k<3;k++)
-                    dp[i][j]+=dp[i-1][k]*dp[0][(j-k+3)%3];
-        printf("%d\n",dp[n-1][0]);
+        if (l > r)
+        {
+            puts("0");
+            continue;
+        }
+        memset(dp, 0, sizeof(dp));
+        for (int i = 0; i < 3; i++)
+            dp[0][i] = init(i);
+        for (int i = 1; i < n; i++)
+            for (int j = 0; j < 3; j++)
+                for (int k = 0; k < 3; k++)
+                    dp[i][j] += dp[i - 1][k] * dp[0][(j - k + 3) % 3];
+        printf("%d\n", dp[n - 1][0]);
     }
     return 0;
 }
@@ -812,62 +819,70 @@ int main()
 #include <algorithm>
 using namespace std;
 
-const int maxn=10000;
-int matrix[3][3],cnt[3],n,l,r;
+const int maxn = 10000;
+int matrix[3][3], cnt[3], n, l, r;
 
-inline int cal(int mod,int num)
+inline int cal(int mod, int num)
 {
-    int ans=num/3;
-    if (num%3==1 && mod==1) ans++;
-    if (num%3==2 && mod>=1) ans++;
+    int ans = num / 3;
+    if (num % 3 == 1 && mod == 1)
+        ans++;
+    if (num % 3 == 2 && mod >= 1)
+        ans++;
     return ans;
 }
 
 inline int init(int mod)
 {
-    int gap=max(max(l,r),max(-l,-r))/3*3+3;
-    return cal(mod,r+gap)-cal(mod,l-1+gap);
+    int gap = max(max(l, r), max(-l, -r)) / 3 * 3 + 3;
+    return cal(mod, r + gap) - cal(mod, l - 1 + gap);
 }
 
 void mulCount()
 {
     int tmp[3];
-    for (int i=0;i<3;i++)
-        tmp[i]=cnt[i],cnt[i]=0;
-    for (int i=0;i<3;i++)
-        for (int j=0;j<3;j++)
-            cnt[j]+=matrix[i][j]*tmp[i];
+    for (int i = 0; i < 3; i++)
+        tmp[i] = cnt[i], cnt[i] = 0;
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            cnt[j] += matrix[i][j] * tmp[i];
     return;
 }
 
 void mulMatrix()
 {
     int tmp[3][3];
-    for (int i=0;i<3;i++)
-        for (int j=0;j<3;j++)
-        tmp[i][j]=matrix[i][j],matrix[i][j]=0;
-    for (int i=0;i<3;i++)
-        for (int j=0;j<3;j++)
-            for (int k=0;k<3;k++)
-                matrix[i][j]+=tmp[i][k]*tmp[k][j];
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            tmp[i][j] = matrix[i][j], matrix[i][j] = 0;
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            for (int k = 0; k < 3; k++)
+                matrix[i][j] += tmp[i][k] * tmp[k][j];
     return;
 }
 
 int main()
 {
-    while (~scanf("%d %d %d",&n,&l,&r))
+    while (~scanf("%d %d %d", &n, &l, &r))
     {
-        if (l>r) {puts("0"); continue;}
-        for (int i=0;i<3;i++) cnt[i]=init(i);
-        matrix[0][0]=cnt[0],matrix[0][1]=cnt[1],matrix[0][2]=cnt[2];
-        matrix[1][0]=cnt[2],matrix[1][1]=cnt[0],matrix[1][2]=cnt[1];
-        matrix[2][0]=cnt[1],matrix[2][1]=cnt[2],matrix[2][2]=cnt[0];
-        for (int t=n-1;t;t>>=1)
+        if (l > r)
         {
-            if (t&1) mulCount();
+            puts("0");
+            continue;
+        }
+        for (int i = 0; i < 3; i++)
+            cnt[i] = init(i);
+        matrix[0][0] = cnt[0], matrix[0][1] = cnt[1], matrix[0][2] = cnt[2];
+        matrix[1][0] = cnt[2], matrix[1][1] = cnt[0], matrix[1][2] = cnt[1];
+        matrix[2][0] = cnt[1], matrix[2][1] = cnt[2], matrix[2][2] = cnt[0];
+        for (int t = n - 1; t; t >>= 1)
+        {
+            if (t & 1)
+                mulCount();
             mulMatrix();
         }
-        printf("%d\n",cnt[0]);
+        printf("%d\n", cnt[0]);
     }
     return 0;
 }
@@ -878,23 +893,37 @@ int main()
 \begin{lstlisting}
 #include <cstdio>
 
-const int maxn=1000;
-int n,a[maxn+5],dp[maxn+5],last[maxn+5];
+const int maxn = 1000;
+int n, a[maxn + 5], dp[maxn + 5], last[maxn + 5];
 
 int main()
 {
-    scanf("%d",&n);
-    for (int i=1;i<=n;i++) scanf("%d",&a[i]),dp[i]=1;
-    for (int i=1;i<=n;i++)
-        for (int j=1;j<i;j++)
-            if (a[i]>a[j] && dp[j]+1>=dp[i])
-                dp[i]=dp[j]+1,last[i]=j;
-    int ans=-1,idx=-1,tot=0;
-    for (int i=1;i<=n;i++) if (dp[i]>ans) ans=dp[i],idx=i;
-    while (idx) dp[tot++]=a[idx],idx=last[idx];
-    printf("%d\n",ans);
-    for (int i=tot-1;i>=0;i--) printf("%d ",dp[i]);
-    puts(""); return 0;
+    scanf("%d", &n);
+    int ans = -1, idx = -1, tot = 0;
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    a[0] = 0x7fffffff;
+    for (int i = 1, l, r; i <= n; i++)
+    {
+        for (l = 0, r = n + 1; r - l > 1;)
+        {
+            int mid = (l + r) >> 1;
+            if (a[dp[mid]] >= a[i])
+                r = mid;
+            else
+                l = mid;
+        }
+        dp[r] = i, last[i] = dp[r - 1];
+        if (r > ans)
+            ans = r, idx = i;
+    }
+    while (idx)
+        dp[tot++] = a[idx], idx = last[idx];
+    printf("%d\n", ans);
+    for (int i = tot - 1; i >= 0; i--)
+        printf("%d ", dp[i]);
+    puts("");
+    return 0;
 }
 \end{lstlisting}
 
@@ -903,30 +932,37 @@ int main()
 \begin{lstlisting}
 #include <cstdio>
 
-const int maxn=1000;
-int n,a[maxn+5],dp[maxn+5],last[maxn+5];
+const int maxn = 1000;
+int n, a[maxn + 5], dp[maxn + 5], last[maxn + 5];
 
 int main()
 {
-    scanf("%d",&n);
-    int ans=-1,idx=-1,tot=0;
-    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
-    a[0]=0x7fffffff;
-    for (int i=1,l,r;i<=n;i++)
+    scanf("%d", &n);
+    int ans = -1, idx = -1, tot = 0;
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    a[0] = 0x7fffffff;
+    for (int i = 1, l, r; i <= n; i++)
     {
-        for (l=0,r=n+1;r-l>1;)
+        for (l = 0, r = n + 1; r - l > 1;)
         {
-            int mid=(l+r)>>1;
-            if (a[dp[mid]]>=a[i]) r=mid;
-            else l=mid;
+            int mid = (l + r) >> 1;
+            if (a[dp[mid]] >= a[i])
+                r = mid;
+            else
+                l = mid;
         }
-        dp[r]=i,last[i]=dp[r-1];
-        if (r>ans) ans=r,idx=i;
+        dp[r] = i, last[i] = dp[r - 1];
+        if (r > ans)
+            ans = r, idx = i;
     }
-    while (idx) dp[tot++]=a[idx],idx=last[idx];
-    printf("%d\n",ans);
-    for (int i=tot-1;i>=0;i--) printf("%d ",dp[i]);
-    puts(""); return 0;
+    while (idx)
+        dp[tot++] = a[idx], idx = last[idx];
+    printf("%d\n", ans);
+    for (int i = tot - 1; i >= 0; i--)
+        printf("%d ", dp[i]);
+    puts("");
+    return 0;
 }
 \end{lstlisting}
 
@@ -935,31 +971,40 @@ int main()
 \begin{lstlisting}
 #include <cstdio>
 
-const int maxn=1000;
-double sum,src[maxn+5];
+const int maxn = 1000;
+double sum, src[maxn + 5];
 
 inline int countbit(int num)
 {
-    int ans=0;
-    for (int i=0;i<32;i++) if (num&(1<<i)) ans++;
+    int ans = 0;
+    for (int i = 0; i < 32; i++)
+        if (num & (1 << i))
+            ans++;
     return ans;
 }
 
 inline void cal(int num)
 {
-    double p=1;
-    for (int i=0;i<32;i++)
-        if (num&(1<<i)) p*=src[i];
-        else p*=1-src[i];
-    sum+=p; return;
+    double p = 1;
+    for (int i = 0; i < 32; i++)
+        if (num & (1 << i))
+            p *= src[i];
+        else
+            p *= 1 - src[i];
+    sum += p;
+    return;
 }
 
 int main()
 {
-    int n; scanf("%d",&n);
-    for (int i=0;i<n;i++) scanf("%lf",&src[i]);
-    for (int i=0;i<1<<n;i++) if (countbit(i)>n/2) cal(i);
-    printf("%lf\n",sum);
+    int n;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++)
+        scanf("%lf", &src[i]);
+    for (int i = 0; i < 1 << n; i++)
+        if (countbit(i) > n / 2)
+            cal(i);
+    printf("%lf\n", sum);
     return 0;
 }
 \end{lstlisting}
@@ -969,20 +1014,25 @@ int main()
 \begin{lstlisting}
 #include <cstdio>
 
-const int maxn=1000;
-double sum,src[maxn+5];
-double dp[maxn+5][maxn+5];
+const int maxn = 1000;
+double sum, src[maxn + 5];
+double dp[maxn + 5][maxn + 5];
 
 int main()
 {
-    int n; scanf("%d",&n);
-    for (int i=1;i<=n;i++) scanf("%lf",&src[i]); dp[0][0]=1;
-    for (int i=1;i<=n;i++) dp[i][0]=dp[i-1][0]*(1-src[i]);
-    for (int i=1;i<=n;i++)
-        for (int j=1;j<=n;j++)
-            dp[i][j]=dp[i-1][j-1]*src[i]+dp[i-1][j]*(1-src[i]);
-    for (int i=n/2+1;i<=n;i++) sum+=dp[n][i];
-    printf("%lf\n",sum);
+    int n;
+    scanf("%d", &n);
+    for (int i = 1; i <= n; i++)
+        scanf("%lf", &src[i]);
+    dp[0][0] = 1;
+    for (int i = 1; i <= n; i++)
+        dp[i][0] = dp[i - 1][0] * (1 - src[i]);
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            dp[i][j] = dp[i - 1][j - 1] * src[i] + dp[i - 1][j] * (1 - src[i]);
+    for (int i = n / 2 + 1; i <= n; i++)
+        sum += dp[n][i];
+    printf("%lf\n", sum);
     return 0;
 }
 \end{lstlisting}
@@ -994,20 +1044,22 @@ int main()
 #include <algorithm>
 using namespace std;
 
-const int maxn=1000;
-int n,m,a[maxn+5];
-int dp[maxn+5][maxn+5];
+const int maxn = 1000;
+int n, m, a[maxn + 5];
+int dp[maxn + 5][maxn + 5];
 
 int main()
 {
-    scanf("%d %d",&n,&m);
-    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
-    for (int i=0;i<=n;i++) dp[i][0]=1;
-    for (int i=1;i<=n;i++)
-        for (int j=1;j<=m;j++)
-            for (int k=0;k<=min(j,a[i]);k++)
-                dp[i][j]+=dp[i-1][j-k];
-    printf("%d\n",dp[n][m]);
+    scanf("%d %d", &n, &m);
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    for (int i = 0; i <= n; i++)
+        dp[i][0] = 1;
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= m; j++)
+            for (int k = 0; k <= min(j, a[i]); k++)
+                dp[i][j] += dp[i - 1][j - k];
+    printf("%d\n", dp[n][m]);
     return 0;
 }
 \end{lstlisting}
@@ -1018,19 +1070,21 @@ int main()
 #include <cstdio>
 using namespace std;
 
-const int maxn=1000;
-int n,m,a[maxn+5];
-int dp[maxn+5][maxn+5];
+const int maxn = 1000;
+int n, m, a[maxn + 5];
+int dp[maxn + 5][maxn + 5];
 
 int main()
 {
-    scanf("%d %d",&n,&m);
-    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
-    for (int i=0;i<=n;i++) dp[i][0]=1;
-    for (int i=1;i<=n;i++)
-        for (int j=1;j<=m;j++)
-            dp[i][j]=dp[i][j-1]+dp[i-1][j]-((a[i]>=j)?0:dp[i-1][j-1-a[i]]);
-    printf("%d\n",dp[n][m]);
+    scanf("%d %d", &n, &m);
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    for (int i = 0; i <= n; i++)
+        dp[i][0] = 1;
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= m; j++)
+            dp[i][j] = dp[i][j - 1] + dp[i - 1][j] - ((a[i] >= j) ? 0 : dp[i - 1][j - 1 - a[i]]);
+    printf("%d\n", dp[n][m]);
     return 0;
 }
 \end{lstlisting}
@@ -1042,20 +1096,22 @@ int main()
 #include <algorithm>
 using namespace std;
 
-const int maxn=1000;
-int n,m,p,a[maxn+5];
-int sum[maxn+5],dp[maxn+5][maxn+5];
+const int maxn = 1000;
+int n, m, p, a[maxn + 5];
+int sum[maxn + 5], dp[maxn + 5][maxn + 5];
 
 int main()
 {
-    scanf("%d %d %d",&n,&m,&p);
-    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
-    for (int i=1;i<=n;i++) sum[i]=a[i]+sum[i-1],dp[i][0]=0x80000000;
-    for (int i=1;i<=n;i++)
-        for (int j=1;j<=min(m,i);j++)
-            for (int k=0;k<=i-1;k++)
-                dp[i][j]=max(dp[i][j],(sum[i]-sum[i-k-1])%p+dp[i-k-1][j-1]);
-    printf("%d\n",dp[n][m]);
+    scanf("%d %d %d", &n, &m, &p);
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    for (int i = 1; i <= n; i++)
+        sum[i] = a[i] + sum[i - 1], dp[i][0] = 0x80000000;
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= min(m, i); j++)
+            for (int k = 0; k <= i - 1; k++)
+                dp[i][j] = max(dp[i][j], (sum[i] - sum[i - k - 1]) % p + dp[i - k - 1][j - 1]);
+    printf("%d\n", dp[n][m]);
     return 0;
 }
 \end{lstlisting}
@@ -1068,24 +1124,26 @@ int main()
 #include <algorithm>
 using namespace std;
 
-const int maxn=1000;
-int n,m,p,a[maxn+5];
-int last[maxn+5][maxn+5];
-int sum[maxn+5],dp[maxn+5][maxn+5];
+const int maxn = 1000;
+int n, m, p, a[maxn + 5];
+int last[maxn + 5][maxn + 5];
+int sum[maxn + 5], dp[maxn + 5][maxn + 5];
 
 int main()
 {
-    scanf("%d %d %d",&n,&m,&p);
-    for (int i=1;i<=n;i++) scanf("%d",&a[i]);
-    for (int i=1;i<=n;i++) sum[i]=a[i]+sum[i-1],dp[i][0]=0x80000000;
-    for (int i=1;i<=n;i++)
-        for (int j=1;j<=min(m,i);j++)
+    scanf("%d %d %d", &n, &m, &p);
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    for (int i = 1; i <= n; i++)
+        sum[i] = a[i] + sum[i - 1], dp[i][0] = 0x80000000;
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= min(m, i); j++)
         {
-            for (int k=0;k<p;k++)
-                dp[i][j]=max(dp[i][j],(sum[i]-sum[last[j-1][k]])%p+dp[last[j-1][k]][j-1]);
-            last[j][dp[i][j]%p]=i;
+            for (int k = 0; k < p; k++)
+                dp[i][j] = max(dp[i][j], (sum[i] - sum[last[j - 1][k]]) % p + dp[last[j - 1][k]][j - 1]);
+            last[j][dp[i][j] % p] = i;
         }
-    printf("%d\n",dp[n][m]);
+    printf("%d\n", dp[n][m]);
     return 0;
 }
 \end{lstlisting}

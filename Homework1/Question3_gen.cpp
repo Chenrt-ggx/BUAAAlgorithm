@@ -47,7 +47,6 @@ int main()
         Node node = pq.top();
         pq.pop();
         l = node.l, r = node.r;
-        // printf("%d %d\n",l,r);
         int mid = (l + r) >> 1;
         a[mid] = i;
         if (mid - 1 >= l)
