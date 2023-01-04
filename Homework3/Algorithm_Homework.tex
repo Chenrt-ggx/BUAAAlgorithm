@@ -475,16 +475,22 @@ using namespace std;
 
 int main()
 {
-    int n,x,ans=0; scanf("%d %d",&n,&x);
-    vector<int> a(n); for (int i=0;i<n;i++) scanf("%d",&a[i]);
-    for (int i=1;i<n;i++) if (a[i-1]+a[i]>=x)
-    {
-        int gap=a[i-1]+a[i]-x+1;
-        if (gap<=a[i]) a[i]-=gap;
-        else a[i-1]-=gap-a[i],a[i]=0;
-        ans+=gap;
-    }
-    printf("%d\n",ans);
+    int n, x, ans = 0;
+    scanf("%d %d", &n, &x);
+    vector<int> a(n);
+    for (int i = 0; i < n; i++)
+        scanf("%d", &a[i]);
+    for (int i = 1; i < n; i++)
+        if (a[i - 1] + a[i] >= x)
+        {
+            int gap = a[i - 1] + a[i] - x + 1;
+            if (gap <= a[i])
+                a[i] -= gap;
+            else
+                a[i - 1] -= gap - a[i], a[i] = 0;
+            ans += gap;
+        }
+    printf("%d\n", ans);
     return 0;
 }
 \end{lstlisting}
@@ -499,12 +505,17 @@ using namespace std;
 
 int main()
 {
-    int n; scanf("%d",&n);
-    vector<pair<int,int>> a(n);
-    for (int i=0,val;i<n;i++) scanf("%d",&val),a[i].first=val,a[i].second=i+1;
-    sort(a.begin(),a.end(),[](pair<int,int> x,pair<int,int> y){return x.first<y.first;});
-    for (int i=0;i<n;i++) printf("%d ",a[i].second);
-    putchar('\n'); return 0;
+    int n;
+    scanf("%d", &n);
+    vector<pair<int, int>> a(n);
+    for (int i = 0, val; i < n; i++)
+        scanf("%d", &val), a[i].first = val, a[i].second = i + 1;
+    sort(a.begin(), a.end(), [](pair<int, int> x, pair<int, int> y)
+        { return x.first < y.first; });
+    for (int i = 0; i < n; i++)
+        printf("%d ", a[i].second);
+    putchar('\n');
+    return 0;
 }
 \end{lstlisting}
 
@@ -517,19 +528,35 @@ using namespace std;
 
 int main()
 {
-    int n,k,ans; scanf("%d %d",&n,&k);
-    vector<int> a(n); for (int i=0;i<n;i++) scanf("%d",&a[i]);
-    if (k==1) {ans=0x7fffffff; for (int i=0;i<n;i++) ans=min(ans,a[i]);}
-    else if (k!=2) {ans=0x80000000; for (int i=0;i<n;i++) ans=max(ans,a[i]);}
+    int n, k, ans;
+    scanf("%d %d", &n, &k);
+    vector<int> a(n);
+    for (int i = 0; i < n; i++)
+        scanf("%d", &a[i]);
+    if (k == 1)
+    {
+        ans = 0x7fffffff;
+        for (int i = 0; i < n; i++)
+            ans = min(ans, a[i]);
+    }
+    else if (k != 2)
+    {
+        ans = 0x80000000;
+        for (int i = 0; i < n; i++)
+            ans = max(ans, a[i]);
+    }
     else
     {
-        vector<int> lmin(n),rmin(n);
-        lmin[0]=a[0],rmin[n-1]=a[n-1],ans=0x80000000;
-        for (int i=1;i<n;i++) lmin[i]=min(lmin[i-1],a[i]);
-        for (int i=n-2;i>=0;i--) rmin[i]=min(rmin[i+1],a[i]);
-        for (int i=1;i<n;i++) ans=max(ans,max(lmin[i-1],rmin[i]));
+        vector<int> lmin(n), rmin(n);
+        lmin[0] = a[0], rmin[n - 1] = a[n - 1], ans = 0x80000000;
+        for (int i = 1; i < n; i++)
+            lmin[i] = min(lmin[i - 1], a[i]);
+        for (int i = n - 2; i >= 0; i--)
+            rmin[i] = min(rmin[i + 1], a[i]);
+        for (int i = 1; i < n; i++)
+            ans = max(ans, max(lmin[i - 1], rmin[i]));
     }
-    printf("%d\n",ans);
+    printf("%d\n", ans);
     return 0;
 }
 \end{lstlisting}
@@ -544,12 +571,17 @@ using namespace std;
 
 int main()
 {
-    int n,m,ans=0; scanf("%d %d",&n,&m);
-    vector<int> v(n); for (int i=0;i<n;i++) scanf("%d",&v[i]);
-    sort(v.begin(),v.end());
-    int lptr=0,rptr=n-1;
-    while (lptr<=rptr) lptr+=v[lptr]+v[rptr]<=m,rptr--,ans++;
-    printf("%d\n",ans); return 0;
+    int n, m, ans = 0;
+    scanf("%d %d", &n, &m);
+    vector<int> v(n);
+    for (int i = 0; i < n; i++)
+        scanf("%d", &v[i]);
+    sort(v.begin(), v.end());
+    int lptr = 0, rptr = n - 1;
+    while (lptr <= rptr)
+        lptr += v[lptr] + v[rptr] <= m, rptr--, ans++;
+    printf("%d\n", ans);
+    return 0;
 }
 \end{lstlisting}
 
@@ -561,10 +593,12 @@ int main()
 #include <vector>
 using namespace std;
 
-inline bool check(int x,int y,int n,int m,vector<vector<bool>> vis)
+inline bool check(int x, int y, int n, int m, vector<vector<bool>> vis)
 {
-    if (x<0 || x>=n) return false;
-    if (y<0 || y>=m) return false;
+    if (x < 0 || x >= n)
+        return false;
+    if (y < 0 || y >= m)
+        return false;
     return !vis[x][y];
 }
 
@@ -572,31 +606,34 @@ inline void display(vector<vector<int>> map)
 {
     for (vector<int> i : map)
     {
-        for (int j : i) printf("%02d ",j);
+        for (int j : i)
+            printf("%02d ", j);
         putchar('\n');
     }
     return;
 }
 
-inline void search(int x,int y,int n,int m,vector<vector<int>> map,vector<vector<int>>& ans)
+inline void search(int x, int y, int n, int m, vector<vector<int>> map, vector<vector<int>> &ans)
 {
-    static int next[4][2]={{1,0},{-1,0},{0,1},{0,-1}};
-    vector<vector<bool>> vis(n,vector<bool>(m,0));
-    vis[x][y]=true;
-    queue<pair<int,int>> que;
-    que.push(pair<int,int>(x,y));
+    static int next[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    vector<vector<bool>> vis(n, vector<bool>(m, 0));
+    vis[x][y] = true;
+    queue<pair<int, int>> que;
+    que.push(pair<int, int>(x, y));
     while (!que.empty())
     {
-        pair<int,int> node=que.front(); que.pop();
-        for (int i=0;i<4;i++)
+        pair<int, int> node = que.front();
+        que.pop();
+        for (int i = 0; i < 4; i++)
         {
-            int new_x=node.first+next[i][0];
-            int new_y=node.second+next[i][1];
-            if (check(new_x,new_y,n,m,vis))
+            int new_x = node.first + next[i][0];
+            int new_y = node.second + next[i][1];
+            if (check(new_x, new_y, n, m, vis))
             {
-                vis[new_x][new_y]=true;
-                ans[new_x][new_y]=ans[node.first][node.second]+1;
-                if (!map[new_x][new_y]) que.push(pair<int,int>(new_x,new_y));
+                vis[new_x][new_y] = true;
+                ans[new_x][new_y] = ans[node.first][node.second] + 1;
+                if (!map[new_x][new_y])
+                    que.push(pair<int, int>(new_x, new_y));
             }
         }
     }
@@ -605,25 +642,28 @@ inline void search(int x,int y,int n,int m,vector<vector<int>> map,vector<vector
 
 int main()
 {
-    int n,m; scanf("%d %d",&n,&m);
-    vector<pair<int,int>> blocks;
-    vector<vector<int>> map(n,vector<int>(m,0));
-    for (int i=0,val;i<n;i++) for (int j=0;j<m;j++)
-    {
-        scanf("%d",&val);
-        map[i][j]=val;
-        if (val) blocks.push_back(pair<int,int>(i,j));
-    }
-    vector<vector<int>> from_end(n,vector<int>(m,0));
-    vector<vector<int>> from_begin(n,vector<int>(m,0));
-    search(0,0,n,m,map,from_begin);
-    search(n-1,m-1,n,m,map,from_end);
+    int n, m;
+    scanf("%d %d", &n, &m);
+    vector<pair<int, int>> blocks;
+    vector<vector<int>> map(n, vector<int>(m, 0));
+    for (int i = 0, val; i < n; i++)
+        for (int j = 0; j < m; j++)
+        {
+            scanf("%d", &val);
+            map[i][j] = val;
+            if (val)
+                blocks.push_back(pair<int, int>(i, j));
+        }
+    vector<vector<int>> from_end(n, vector<int>(m, 0));
+    vector<vector<int>> from_begin(n, vector<int>(m, 0));
+    search(0, 0, n, m, map, from_begin);
+    search(n - 1, m - 1, n, m, map, from_end);
     // putchar('\n'),display(from_begin);
     // putchar('\n'),display(from_end);
-    int ans=from_begin[n-1][m-1];
-    for (pair<int,int> i : blocks)
-        ans=min(ans,from_begin[i.first][i.second]+from_end[i.first][i.second]);
-    printf("%d\n",ans);
+    int ans = from_begin[n - 1][m - 1];
+    for (pair<int, int> i : blocks)
+        ans = min(ans, from_begin[i.first][i.second] + from_end[i.first][i.second]);
+    printf("%d\n", ans);
     return 0;
 }
 \end{lstlisting}

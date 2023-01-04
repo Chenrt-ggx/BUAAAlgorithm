@@ -445,52 +445,60 @@ $$
 #include <vector>
 using namespace std;
 
-int n,m,count,colors;
+int n, m, count, colors;
 vector<vector<int>> graph;
 
 stack<int> stk;
 vector<bool> vis;
-vector<int> dfn,low,color;
+vector<int> dfn, low, color;
 
 void tarjan(int src)
 {
-    dfn[src]=low[src]=++count;
-    vis[src]=true,stk.push(src);
+    dfn[src] = low[src] = ++count;
+    vis[src] = true, stk.push(src);
     for (int i : graph[src])
     {
-        if (!dfn[i]) tarjan(i),low[src]=min(low[src],low[i]);
-        else if (vis[i]) low[src]=min(low[src],dfn[i]);
+        if (!dfn[i])
+            tarjan(i), low[src] = min(low[src], low[i]);
+        else if (vis[i])
+            low[src] = min(low[src], dfn[i]);
     }
-    if (dfn[src]==low[src])
+    if (dfn[src] == low[src])
     {
-        vis[src]=false,color[src]=colors;
-        while (!stk.empty() && stk.top()!=src)
+        vis[src] = false, color[src] = colors;
+        while (!stk.empty() && stk.top() != src)
         {
-            color[stk.top()]=colors;
-            vis[stk.top()]=false;
+            color[stk.top()] = colors;
+            vis[stk.top()] = false;
             stk.pop();
         }
-        colors++,stk.pop();
+        colors++, stk.pop();
     }
 }
 
 int main()
 {
-    int ans=0;
-    scanf("%d %d",&n,&m);
-    graph.resize(n),vis.resize(n,false);
-    dfn.resize(n,0),low.resize(n,0),color.resize(n,0);
-    for (int s,t,i=0;i<m;i++)
+    int ans = 0;
+    scanf("%d %d", &n, &m);
+    graph.resize(n), vis.resize(n, false);
+    dfn.resize(n, 0), low.resize(n, 0), color.resize(n, 0);
+    for (int s, t, i = 0; i < m; i++)
     {
-        scanf("%d %d",&s,&t);
+        scanf("%d %d", &s, &t);
         graph[s].push_back(t);
     }
-    for (int i=0;i<n;i++) if (!dfn[i]) tarjan(i);
-    vector<int> check(colors,0);
-    for (int i=0;i<n;i++) for (int j : graph[i])
-        if (color[i]-color[j]) check[color[j]]++;
-    for (int i : check) if (!i) ans++;
-    printf("%d\n",ans);
+    for (int i = 0; i < n; i++)
+        if (!dfn[i])
+            tarjan(i);
+    vector<int> check(colors, 0);
+    for (int i = 0; i < n; i++)
+        for (int j : graph[i])
+            if (color[i] - color[j])
+                check[color[j]]++;
+    for (int i : check)
+        if (!i)
+            ans++;
+    printf("%d\n", ans);
     return 0;
 }
 \end{lstlisting}
@@ -502,22 +510,32 @@ int main()
 #include <vector>
 using namespace std;
 
-const int inf=100000000;
+const int inf = 100000000;
 
 int main()
 {
-    int n,ans=inf; scanf("%d",&n);
-    vector<vector<int>> dis(n,vector<int>(n,0));
-    vector<vector<int>> graph(n,vector<int>(n,0));
-    for (int i=0;i<n;i++) for (int j=0;j<n;j++) scanf("%d",&graph[i][j]);
-    for (int i=0;i<n;i++) for (int j=0;j<n;j++) dis[i][j]=graph[i][j];
-    for (int k=0;k<n;k++) for (int i=0;i<n;i++) for (int j=0;j<n;j++)
-    {
-        if (i<j && j<k) ans=min(ans,dis[i][j]+graph[i][k]+graph[j][k]);
-        dis[i][j]=min(dis[i][j],dis[i][k]+dis[k][j]);
-    }
-    if (ans<inf) printf("%d\n",ans);
-    else puts("nan");
+    int n, ans = inf;
+    scanf("%d", &n);
+    vector<vector<int>> dis(n, vector<int>(n, 0));
+    vector<vector<int>> graph(n, vector<int>(n, 0));
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            scanf("%d", &graph[i][j]);
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            dis[i][j] = graph[i][j];
+    for (int k = 0; k < n; k++)
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+            {
+                if (i < j && j < k)
+                    ans = min(ans, dis[i][j] + graph[i][k] + graph[j][k]);
+                dis[i][j] = min(dis[i][j], dis[i][k] + dis[k][j]);
+            }
+    if (ans < inf)
+        printf("%d\n", ans);
+    else
+        puts("nan");
     return 0;
 }
 \end{lstlisting}
@@ -531,41 +549,57 @@ using namespace std;
 
 int main()
 {
-    int n,m;
-    scanf("%d %d",&n,&m);
+    int n, m;
+    scanf("%d %d", &n, &m);
     vector<int> count(n);
     vector<vector<int>> ins(n);
     vector<vector<int>> outs(n);
-    for (int s,t,i=0;i<m;i++)
+    for (int s, t, i = 0; i < m; i++)
     {
-        scanf("%d %d",&s,&t);
+        scanf("%d %d", &s, &t);
         outs[s].push_back(t);
         ins[t].push_back(s);
     }
-    int start=-1;
-    for (int i=0;i<n;i++)
+    int start = -1;
+    for (int i = 0; i < n; i++)
     {
-        count[i]=ins[i].size(); if (count[i]==0)
+        count[i] = ins[i].size();
+        if (count[i] == 0)
         {
-            if (start==-1) start=i;
-            else {printf("%d\n",-1); return 0;}
-        }
-    }
-    vector<int> order;
-    while (start!=-1)
-    {
-        order.push_back(start),start=-1;
-        for (int i : outs[order[order.size()-1]])
-        {
-            count[i]--; if (count[i]==0)
+            if (start == -1)
+                start = i;
+            else
             {
-                if (start==-1) start=i;
-                else {printf("%d\n",-1); return 0;}
+                printf("%d\n", -1);
+                return 0;
             }
         }
     }
-    if ((int)order.size()==n) for (int i : order) printf("%d ",i);
-    else printf("%d",-1); puts("");
+    vector<int> order;
+    while (start != -1)
+    {
+        order.push_back(start), start = -1;
+        for (int i : outs[order[order.size() - 1]])
+        {
+            count[i]--;
+            if (count[i] == 0)
+            {
+                if (start == -1)
+                    start = i;
+                else
+                {
+                    printf("%d\n", -1);
+                    return 0;
+                }
+            }
+        }
+    }
+    if ((int)order.size() == n)
+        for (int i : order)
+            printf("%d ", i);
+    else
+        printf("%d", -1);
+    puts("");
     return 0;
 }
 \end{lstlisting}
@@ -580,29 +614,37 @@ using namespace std;
 
 int main()
 {
-    int n,m; scanf("%d %d",&n,&m);
-    vector<int> dis(n,-1);
+    int n, m;
+    scanf("%d %d", &n, &m);
+    vector<int> dis(n, -1);
     vector<vector<int>> graph(n);
-    for (int s,t,i=0;i<m;i++)
+    for (int s, t, i = 0; i < m; i++)
     {
-        scanf("%d %d",&s,&t);
+        scanf("%d %d", &s, &t);
         graph[s].push_back(t);
         graph[t].push_back(s);
     }
     queue<int> que;
-    for (int i=0;i<n;i++) if (dis[i]<0)
-    {
-        dis[i]=0,que.push(i);
-        while (!que.empty())
+    for (int i = 0; i < n; i++)
+        if (dis[i] < 0)
         {
-            int top=que.front(); que.pop();
-            for (int j : graph[top])
+            dis[i] = 0, que.push(i);
+            while (!que.empty())
             {
-                if (dis[j]<0) dis[j]=dis[top]+1,que.push(j);
-                else if ((~dis[j]^dis[top])&1) {puts("false"); return 0;}
+                int top = que.front();
+                que.pop();
+                for (int j : graph[top])
+                {
+                    if (dis[j] < 0)
+                        dis[j] = dis[top] + 1, que.push(j);
+                    else if ((~dis[j] ^ dis[top]) & 1)
+                    {
+                        puts("false");
+                        return 0;
+                    }
+                }
             }
         }
-    }
     puts("true");
     return 0;
 }
@@ -621,16 +663,20 @@ mt19937 generator(0x19260817);
 
 int main()
 {
-    int n=15000,m=60000;
-    printf("%d %d\n",n,m);
-    set<pair<int,int>> unique;
-    for (int i=0;i<m;i++)
+    int n = 15000, m = 60000;
+    printf("%d %d\n", n, m);
+    set<pair<int, int>> unique;
+    for (int i = 0; i < m; i++)
     {
-        int x=generator()%n;
-        int y=generator()%n;
-        pair<int,int> gen(x,y);
-        if (unique.find(gen)!=unique.end()) {i--; continue;}
-        printf("%d %d\n",x,y);
+        int x = generator() % n;
+        int y = generator() % n;
+        pair<int, int> gen(x, y);
+        if (unique.find(gen) != unique.end())
+        {
+            i--;
+            continue;
+        }
+        printf("%d %d\n", x, y);
     }
     return 0;
 }
